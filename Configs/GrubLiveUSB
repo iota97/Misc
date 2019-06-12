@@ -1,0 +1,13 @@
+# Config per GRUB su USB live (Kali 2019.2, differenti distro hanno initrd.img in path diverse)
+
+# chiavetta in fat32
+# sudo grub-install /dev/sdX --boot-directory=/mnt/point/boot/
+# config in boot/grub/grub.cfg
+# iso in boot/iso/kali.iso
+
+menuentry 'Kali loopback' {
+	set isofile='/boot/iso/kali.iso'
+	loopback loop $isofile
+	linux (loop)/live/vmlinuz boot=live findiso=$isofile noconfig=sudo username=root hostname=kali
+	initrd (loop)/live/initrd.img
+}
