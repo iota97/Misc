@@ -31,7 +31,7 @@ void main() {
   vec3 hsv = rgb2hsv(rgb);
 
   // check the hue for "red" range, and for minimum saturation and "lightness"
-  if ((hsv.x > 0.95 || hsv.x < 0.05) && hsv.y > 0.3 && hsv.z > 0.4) {
+  if ((hsv.x > 0.95 || hsv.x < 0.05) && hsv.y > 0.1 && hsv.z > 0.35) {
 
     // keep the red, set green and blue to 0
     gl_FragColor.rgb = vec3(rgb.r, 0, 0);
