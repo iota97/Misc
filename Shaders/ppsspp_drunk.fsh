@@ -8,8 +8,6 @@ precision mediump int;
 #endif
 
 uniform sampler2D sampler0;
-
-uniform vec2 u_texelDelta;
 uniform vec4 u_time;
 
 varying vec2 v_texcoord0;
