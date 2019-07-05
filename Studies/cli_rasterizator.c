@@ -1,6 +1,6 @@
-// Bugged CLI rasterization
+// CLI rasterization
 
-// TODO: fix it 
+// use tris only .obj model with far away vertex (float precision)
 
 #include <stdio.h>
 #include <math.h>
@@ -24,7 +24,10 @@ static char screen[80][40];
 static float depth[80][40];
 
 // Material array of char
-static char material_array[] = {'+', '-', '*', '/'};
+static char material_array[] = {'a', 'b', 'c', 'd', 
+				'e', 'f', 'g', 'h',
+				'i', 'j', 'k', 'l',
+				'm', 'n', 'o', 'p'};
 
 // Restore position
 void restore()
@@ -89,7 +92,8 @@ int parse_obj(char* path)
 
 	}
 
-	restore();
+	// Close the file
+	fclose(mesh_file);
 	return 0;
 }
 
@@ -199,49 +203,78 @@ void render()
 	clear();
 	int material_index = 0;
 
+
 	for (int i = 0; i < tris_count; i++) 
 	{
-		for (int y = 0; y < 40; y++) 
+		
+		// Raster the vertex to screen
+		double x_array[] = {
+			(tris_buffer[i][0].x / tris_buffer[i][0].z * 80) + 80/2,
+			(tris_buffer[i][1].x / tris_buffer[i][1].z * 80) + 80/2,
+			(tris_buffer[i][2].x / tris_buffer[i][2].z * 80) + 80/2
+		};
+		double y_array[] = {
+			(tris_buffer[i][0].y / tris_buffer[i][0].z * 40) + 40/2,
+			(tris_buffer[i][1].y / tris_buffer[i][1].z * 40) + 40/2,
+			(tris_buffer[i][2].y / tris_buffer[i][2].z * 40) + 40/2
+		};
+
+		// Get the bounding coordinate of the tris
+		int min_x = 80;
+		int min_y = 40;
+		int max_x = 0;
+		int max_y = 0;
+
+		for (int j = 0; j < 3; j++)
 		{
-			for (int x = 0; x < 80; x++) 
+			if (x_array[j] < min_x)
+				min_x = x_array[j];
+			if (x_array[j] > max_x)
+				max_x = x_array[j];
+			if (y_array[j] < min_y)
+				min_y = y_array[j];
+			if (y_array[j] > max_y)
+				max_y = y_array[j];
+		}
+					
+		// Test only the pixel in this area
+		for (int y = min_y; y < max_y; y++) 
+		{
+			for (int x = min_x; x < max_x; x++) 
 			{
 				int out = 0;
-
+				
 				for (int j = 0; j < 3; j++)
 				{
 					// Get the next vertex index
 					int j_n = (j == 2) ? 0 : j + 1;	
-					int j_nn = (j_n == 2) ? 0 : j_n + 1;				
-				
-					// Rester the vertex to screen space
-					int x0 = (int) roundf(tris_buffer[i][j].x / tris_buffer[i][j].z * 80) + 80/2;
-					int y0 = (int) roundf(tris_buffer[i][j].y / tris_buffer[i][j].z * 40) + 40/2;
-					int x1 = (int) roundf(tris_buffer[i][j_n].x / tris_buffer[i][j_n].z * 80) + 80/2;
-					int y1 = (int) roundf(tris_buffer[i][j_n].y / tris_buffer[i][j_n].z * 40) + 40/2;
-					int x2 = (int) roundf(tris_buffer[i][j_nn].x / tris_buffer[i][j_nn].z * 80) + 80/2;
-					int y2 = (int) roundf(tris_buffer[i][j_nn].y / tris_buffer[i][j_nn].z * 40) + 40/2;
+					int j_nn = (j_n == 2) ? 0 : j_n + 1;
 
 					// Handle vertical line
-					if (x0 == x1)
+					if (x_array[j] == x_array[j_n])
 					{	
-						
-						out += (x0 < x2) ? (x < x0) : (x > x0);
+						out += (x_array[j] < x_array[j_nn]) ? (x < x_array[j]) : (x > x_array[j]);
 					}
 					else 
 					{ 
 						// Handle horizzontal one
-						if (y0 == y1)
+						if (y_array[j] == y_array[j_n])
 						{
-							out += (y0 < y2) ? (y < y0) : (y > y0);
+							out += (y_array[j] < y_array[j_nn]) ? (y < y_array[j]) : (y > y_array[j]);
 						}						
 						else
 						{ 
 							// Check clock wise or not
-							if ((x2 - x0)*(y1 - y0) - (y2 - y0)*(x1 - x0) < 0)
-								out += (x - x0)*(y1 - y0) - (y - y0)*(x1 - x0) > 0;
+							if ((x_array[j_nn] - x_array[j])*(y_array[j_n] - y_array[j]) < 
+								(y_array[j_nn] - y_array[j])*(x_array[j_n] - x_array[j]))
+								
+								// Then
+								out += (x - x_array[j])*(y_array[j_n] - y_array[j]) > 
+									(y - y_array[j])*(x_array[j_n] - x_array[j]);
 							else 
-								out += (x - x0)*(y1 - y0) - (y - y0)*(x1 - x0) < 0;
-
+								// Else
+								out += (x - x_array[j])*(y_array[j_n] - y_array[j]) < 
+									(y - y_array[j])*(x_array[j_n] - x_array[j]);
 						}					
 					}
 				}
@@ -249,9 +282,14 @@ void render()
 				// If is inside every line, render it
 				if (!out) 
 				{
-
 					// Depth test
-					float d = tris_buffer[i][0].z + tris_buffer[i][1].z + tris_buffer[i][2].z;
+					float d=0;
+					for (int j = 0; j < 3; j++)
+					{
+						d += tris_buffer[i][j].z/sqrt((x-x_array[j])*(x-x_array[j]) + (y-y_array[j])*(y-y_array[j]));
+					}
+					
+					//float d = tris_buffer[i][0].z + tris_buffer[i][1].z + tris_buffer[i][2].z;
 					if (depth[x][y] > d)
 					{
 						// Update both buffer
@@ -276,11 +314,23 @@ void render()
 	return;
 }
 
+// Clear the console
+void clear_screen()
+{	
+	// Print 256 new line
+	for (int i = 0; i < 256; i++)
+		printf("\n");
+	return;
+}
+
 // Draw in the console
 void draw()
 {
 	// Render to buffer
 	render();
+	
+	// Clear the console
+	clear_screen();
 
 	// Print it, cropping to 80x24
 	for (int j = 12; j < 36; j++) 
@@ -309,24 +359,23 @@ int main(int argc, char *argv[])
 	// Parse the model
 	if (parse_obj(argv[1]))
 		return 2;
-	
-	// Render
 
 	float rot = 0;
 	
-	// Keep looping
-	for(;;)
+	// Keep looping until user hit 'q'
+	do
 	{
 		// Restore the mesh
 		restore();
 
 		// Set scale, rotation and positon
-		rotate_y(rot+=0.01);
-		translate(0, 0.25, 6.5);
+		rotate_y(rot += 0.1);
+		translate(0, 0, -5);
 		
 		// Render it
-		draw();	
-	}
+		draw();
+
+	} while(getchar()!='q');
 
 	// Exit
 	return 0;
