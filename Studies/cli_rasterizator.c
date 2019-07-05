@@ -203,7 +203,6 @@ void render()
 	clear();
 	int material_index = 0;
 
-
 	for (int i = 0; i < tris_count; i++) 
 	{
 		
@@ -282,14 +281,14 @@ void render()
 				// If is inside every line, render it
 				if (!out) 
 				{
-					// Depth test
+					// Interpolate the depth
 					float d=0;
 					for (int j = 0; j < 3; j++)
 					{
 						d += tris_buffer[i][j].z/sqrt((x-x_array[j])*(x-x_array[j]) + (y-y_array[j])*(y-y_array[j]));
 					}
 					
-					//float d = tris_buffer[i][0].z + tris_buffer[i][1].z + tris_buffer[i][2].z;
+					// Test it
 					if (depth[x][y] > d)
 					{
 						// Update both buffer
@@ -320,6 +319,7 @@ void clear_screen()
 	// Print 256 new line
 	for (int i = 0; i < 256; i++)
 		printf("\n");
+
 	return;
 }
 
