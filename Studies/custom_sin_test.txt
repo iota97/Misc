@@ -1,0 +1,129 @@
+Test:
+Cicle from -5000 to +5000, adding 0.001 every time (10 mln cicle)
+Compute the sum of sin^2(x)+cos^2(x)
+
+custom: custom made sin and cos
+standard: math.h sin and cos
+
+Expected result: 10,000,000
+
+Test result:
+
+Custom					Standard				Delta
+
+val(Ofast):	10,210,142		val(Ofast):	10,210,142		val(Ofast): 0
+time(Ofast):	0,150s			time(Ofast):	0,254s			time(Ofast): 0.104s
+
+val(O2):	10,210,260		val(O2):	10,210,142		val(O2): 118
+time(O2):	0,223s			time(O2):	0,257s			time(02): 0.034s
+
+val(O0):	10,210,260		val(O0):	10,210,142		val(O0): 118
+time(O0):	0,850s			time(O0):	1,059s			time(O0): 0.209s
+
+Conclusion:
+math.h is more accurate (even more on bigger cicle and/or smaller increment), custom is faster
+
+Using Ofast, max optimization in GCC we get more accurate result in custom code, same as in math.h
+
+Footnote (custom code):
+
+#define PI 3.14159265359f
+
+// Normalize rotation between 0 and 2PI
+float normalized_angle(float x)
+{
+	if (x < 0)
+		x += 2*PI*((int)(-x/(2*PI))+1);
+	else 
+		x -= 2*PI*(int)(x/(2*PI));
+
+	return x;
+}	
+
+// Sine
+float sine(float x)
+{
+	// Normalize the rotation
+	x = normalized_angle(x);
+		
+	// Check sign
+	float sign;
+	if (x < PI)
+		sign = 1;
+	else
+		sign = -1;
+
+	// Check symmetry
+	if (x < PI/2 || (x >= PI && x < 3*PI/2))
+		x -= (PI/2)*(int)(x/(PI/2));
+	else
+		x = PI/2 - x + (PI/2)*(int)(x/(PI/2));
+
+	// Check it to be below 45 degree
+	if (x < PI/4)
+	{
+		// Polinomial approximation
+		float x2 = x*x;
+		float x3 = x2*x;
+		float sine = x - x3/6 + x2*x3/120;
+
+		return sine*sign;
+	}
+	else
+	{
+		// Transform to cosine
+		x = PI/2 - x;
+
+		// Polinomial approximation
+		float x2 = x*x;
+		float x4 = x2*x2;
+		float x6 = x2*x4;
+		float cosine = 1 - x2/2 + x4/24 - x6/720;
+
+		return cosine*sign;
+	}
+}
+
+// Cosine
+float cosine(float x)
+{
+	// Normalize the rotation
+	x = normalized_angle(x);
+		
+	// Check sign
+	float sign;
+	if (x < PI/2 || x >= 3*PI/2)
+		sign = 1;
+	else
+		sign = -1;
+
+	// Check symmetry
+	if (x < PI/2 || (x >= PI && x < 3*PI/2))
+		x -= (PI/2)*(int)(x/(PI/2));
+	else
+		x = PI/2 - x + (PI/2)*(int)(x/(PI/2));
+
+	// Check it to be below 45 degree
+	if (x < PI/4)
+	{
+		// Polinomial approximation
+		float x2 = x*x;
+		float x4 = x2*x2;
+		float x6 = x2*x4;
+		float cosine = 1 - x2/2 + x4/24 - x6/720;
+
+		return cosine*sign;
+	}
+	else
+	{
+		// Transform to sine
+		x = PI/2 - x;
+
+		// Polinomial approximation
+		float x2 = x*x;
+		float x3 = x2*x;
+		float sine = x - x3/6 + x2*x3/120;
+
+		return sine*sign;
+	}
+}
