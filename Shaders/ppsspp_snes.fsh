@@ -11,7 +11,7 @@ varying vec2 v_texcoord0;
 void main() {
 
   // Pixelize
-  vec2 coord = vec2(floor(v_texcoord0.x*160.)/160., floor(v_texcoord0.y*90.)/90.);
+  vec2 coord = vec2(floor(v_texcoord0.x*256.)/256., floor(v_texcoord0.y*144.)/144.);
 
   // Reduce color depth
   vec3 col = floor(texture2D(sampler0, coord).xyz*5.)/5.;
