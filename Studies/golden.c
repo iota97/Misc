@@ -1,11 +1,23 @@
+/*
+
+Floating point golden ratio calculator
+
+Cycle used: 5 for both precision
+Correct digit vs internet reference: 6 in single precision, 16 in double
+Loop count needed to compute all the correct digit: 4 for both
+
+Newton method formula:
+
+          x - x*(x^2 - x -1)
+  x0  =   __________________
+
+              x^2 + 1
+
+*/
+
 #include <stdio.h>
 
-// Floating point golden ratio calculator
-
-// Cycle used: 5 for both precision
-// Correct digit vs internet reference: 6 in single precision, 16 in double
-// Loop count needed to compute all the correct digin: 4 in single for both
-
+// Max newton method iteration
 #define MAX_LOOP -1
 
 // Compute the golden ratio with double
