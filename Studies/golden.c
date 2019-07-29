@@ -8,8 +8,8 @@ Loop count needed to compute all the correct digit: 4 for both
 
 Newton method formula:
 
-          x - x*(x^2 - x - 1)
-  x0  =       _______________
+              x*(x^2 - x - 1)
+  x0  =   x - _______________
 
                  x^2 + 1
 
