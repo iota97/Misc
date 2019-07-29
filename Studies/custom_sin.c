@@ -1,31 +1,13 @@
-Test:
-Cicle from -5000 to +5000, adding 0.001 every time (10 mln cicle)
-Compute the sum of sin^2(x)+cos^2(x)
+// Custom sine and cosine accuracy test
 
-custom: custom made sin and cos
-standard: math.h sin and cos
+// Error: 0.000523%
 
-Expected result: 10,000,000
+#define START -5000.f
+#define END 5000.f
+#define INCREMENT 0.001f
+#define MAX_LOOP -1
 
-Test result:
-
-Custom					Standard				Delta
-
-val(Ofast):	10,210,142		val(Ofast):	10,210,142		val(Ofast): 0
-time(Ofast):	0,150s			time(Ofast):	0,254s			time(Ofast): 0.104s
-
-val(O2):	10,210,260		val(O2):	10,210,142		val(O2): 118
-time(O2):	0,223s			time(O2):	0,257s			time(02): 0.034s
-
-val(O0):	10,210,260		val(O0):	10,210,142		val(O0): 118
-time(O0):	0,850s			time(O0):	1,059s			time(O0): 0.209s
-
-Conclusion:
-math.h is more accurate (even more on bigger cicle and/or smaller increment), custom is faster
-
-Using Ofast, max optimization in GCC we get more accurate result in custom code, same as in math.h
-
-Footnote (custom code):
+#include <stdio.h>
 
 #define PI 3.14159265359f
 
@@ -126,4 +108,29 @@ float cosine(float x)
 
 		return sine*sign;
 	}
+}
+
+// Calculate the absolute value
+float absolute(float x)
+{
+	return x > 0 ? x : -x;
+}
+
+// Main loop
+int main()
+{
+	double i = START;
+	double err = 0.;
+	int j = 0;
+
+	while (i < END && j != MAX_LOOP)
+	{
+		err += absolute(1.0-(sine(i)*sine(i)+cosine(i)*cosine(i)));
+		i += INCREMENT;
+		j++;
+	}
+
+	// Print % error
+	printf("Error: %lf%\n", (err*100/j));
+	return 0;
 }
