@@ -1,25 +1,38 @@
 // Custom sine and cosine accuracy test
 
-// Error: 0.000523%
+// cc custom_sin.c -O2 -o test -lm -lpthread && ./test
 
-#define START -5000.f
-#define END 5000.f
-#define INCREMENT 0.001f
-#define MAX_LOOP -1
+/*
+PI 3.14159265359 result
+
+SMALL SINE -- Max: 0.003655% (-11.781015), Avg: 0.000252%
+SMALL COSINE -- Max: 0.003652% (-10.210200), Avg: 0.000252%
+SINE -- Max: 198.935837% (106667408.000000), Avg: 66.297116%
+COSINE -- Max: 200.000000% (85563208.000000), Avg: 94.841570%
+
+*/
+
+/*
+PI M_PI result
+
+SMALL COSINE -- Max: 0.003645% (-0.785422), Avg: 0.000249%
+SMALL SINE -- Max: 0.003643% (11.780985), Avg: 0.000248%
+SINE -- Max: 0.003656% (-2000234752.000000), Avg: 0.000249%
+COSINE -- Max: 0.003659% (1487533056.000000), Avg: 0.000249%
+
+*/
 
 #include <stdio.h>
+#include <math.h>
+#include <pthread.h>
 
 #define PI 3.14159265359f
+//#define PI M_PI
 
 // Normalize rotation between 0 and 2PI
 float normalized_angle(float x)
 {
-	if (x < 0)
-		x += 2*PI*((int)(-x/(2*PI))+1);
-	else 
-		x -= 2*PI*(int)(x/(2*PI));
-
-	return x;
+	return (x < 0) ? x + 2*PI*((int)(-x/(2*PI))+1) : x - 2*PI*(int)(x/(2*PI));
 }	
 
 // Sine
@@ -110,27 +123,163 @@ float cosine(float x)
 	}
 }
 
-// Calculate the absolute value
-float absolute(float x)
+void *reduced_test_sin()
 {
-	return x > 0 ? x : -x;
-}
+	// Start reduced test
+	printf("Running test on SMALL SINE sample...\n");
+	
+	double avg_err = 0.;
+	double max_err = 0.;
+	unsigned long j = 0;
+	float max_err_value;
 
-// Main loop
-int main()
-{
-	double i = START;
-	double err = 0.;
-	int j = 0;
-
-	while (i < END && j != MAX_LOOP)
+	// Test only few value
+	for (float n = -4*PI; n < 4*PI; n+=0.000001)
 	{
-		err += absolute(1.0-(sine(i)*sine(i)+cosine(i)*cosine(i)));
-		i += INCREMENT;
+		
+		double err = fabs(sin(n)-sine(n));
+		avg_err += err;
+
+		if (err > max_err) 
+		{
+			max_err = err;	
+			max_err_value = n;
+		}
 		j++;
 	}
 
-	// Print % error
-	printf("Error: %lf%\n", (err*100/j));
+	// Print errors
+	printf("SMALL SINE -- Max: %lf%% (%f), Avg: %lf%\n", max_err*100., max_err_value, (avg_err*100/j));
+
+	return NULL;
+}
+
+void *reduced_test_cos()
+{
+	// Start reduced test
+	printf("Running test on SMALL COSINE sample...\n");
+	
+	double avg_err = 0.;
+	double max_err = 0.;
+	unsigned long j = 0;
+	float max_err_value;
+
+	// Test only few value
+	for (float n = -4*PI; n < 4*PI; n+=0.000001)
+	{
+		
+		double err = fabs(cos(n)-cosine(n));
+		avg_err += err;
+
+		if (err > max_err) 
+		{
+			max_err = err;	
+			max_err_value = n;
+		}
+		j++;
+	}
+
+	// Print errors
+	printf("SMALL COSINE -- Max: %lf%% (%f), Avg: %lf%\n", max_err*100., max_err_value, (avg_err*100/j));
+
+	return NULL;
+}
+
+void *sin_test()
+{
+	// Start sin test
+	printf("Running test on Sine...\n");
+	
+	double avg_err = 0.;
+	double max_err = 0.;
+	unsigned long j = 0;
+	float max_err_value;
+
+	// Test all float32 value
+	for (int s = 0; s < (1 << 1); s++)
+	{
+		for (int e = 0; e < (1 << 8)-1; e++)
+		{	
+			for (int m = 0; m < (1 << 23); m++)
+			{
+
+				float n = (s << 31) | (e << 23) | m;
+		
+				double err = fabs(sin(n)-sine(n));
+				avg_err += err;
+
+				if (err > max_err) 
+				{
+					max_err = err;	
+					max_err_value = n;
+				}
+
+				j++;
+			}
+		}
+	}
+
+	// Print errors
+	printf("SINE -- Max: %lf%% (%f), Avg: %lf%\n", max_err*100., max_err_value, (avg_err*100/j));
+
+	return NULL;
+}
+
+void *cos_test()
+{
+	// Start cos test
+	printf("Running test on Cosine...\n");
+
+	double avg_err = 0.;
+	double max_err = 0.;
+	unsigned long j = 0;
+	float max_err_value;
+
+	// Test all float32 value
+	for (int s = 0; s < (1 << 1); s++)
+	{
+		for (int e = 0; e < (1 << 8)-1; e++)
+		{	
+			for (int m = 0; m < (1 << 23); m++)
+			{
+
+				float n = (s << 31) | (e << 23) | m;
+		
+				double err = fabs(cos(n)-cosine(n));
+				avg_err += err;
+
+				if (err > max_err) 
+				{
+					max_err = err;	
+					max_err_value = n;
+				}
+
+				j++;
+			}
+		}
+	}
+
+	// Print errors
+	printf("COSINE -- Max: %lf%% (%f), Avg: %lf%\n", max_err*100., max_err_value, (avg_err*100/j));
+
+	return NULL;
+}
+
+// Main
+int main()
+{
+	// Run 3 additional thread 
+	pthread_t sin_thread, cos_thread, reduced_sin_thread, reduced_cos_thread;
+
+	pthread_create(&sin_thread, NULL, sin_test, NULL);
+	pthread_create(&cos_thread, NULL, cos_test, NULL);
+	pthread_create(&reduced_sin_thread, NULL, reduced_test_sin, NULL);
+	pthread_create(&reduced_cos_thread, NULL, reduced_test_cos, NULL);
+
+	pthread_join(sin_thread, NULL);
+	pthread_join(cos_thread, NULL);
+	pthread_join(reduced_sin_thread, NULL);
+	pthread_join(reduced_cos_thread, NULL);
+
 	return 0;
 }
