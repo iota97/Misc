@@ -13,7 +13,7 @@ COSINE -- Max: 200.000000% (85563208.000000), Avg: 94.841570%
 */
 
 /*
-PI M_PI result
+PI 3.14159265358979323846
 
 SMALL COSINE -- Max: 0.003645% (-0.785422), Avg: 0.000249%
 SMALL SINE -- Max: 0.003643% (11.780985), Avg: 0.000248%
@@ -26,8 +26,8 @@ COSINE -- Max: 0.003659% (1487533056.000000), Avg: 0.000249%
 #include <math.h>
 #include <pthread.h>
 
-#define PI 3.14159265359f
-//#define PI M_PI
+//#define PI 3.14159265359f
+#define PI 3.14159265358979323846
 
 // Normalize rotation between 0 and 2PI
 float normalized_angle(float x)
