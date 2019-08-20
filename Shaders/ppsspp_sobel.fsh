@@ -26,7 +26,8 @@ void main() {
   vec3 colv = col2+2.0*col5+col8-col0-2.0*col3-col6;
 
   // Output
-  gl_FragColor.rgb = sqrt(colh*colh+colv*colv);
+  vec3 col = sqrt(colh*colh+colv*colv);
+  gl_FragColor.rgb = 1.0 - vec3(col.r+col.g+col.b)/3.0;
   gl_FragColor.a = 1.0;
 
 }
