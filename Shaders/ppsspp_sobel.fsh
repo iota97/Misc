@@ -33,10 +33,12 @@ void main() {
   float colh = col0+2.0*col1+col2-col6-2.0*col7-col8;
   float colv = col2+2.0*col5+col8-col0-2.0*col3-col6;
 
+  // Angle and magnitude
+  float mag = sqrt(colh*colh+colv*colv)/4.472136;
+  float angle = atan(colv/colh)/3.14159;
+
   // Output color
-  if (sqrt(colh*colh+colv*colv) > 0.8)
-    gl_FragColor = texture2D(sampler0, v_texcoord0);
-  else
-    gl_FragColor = vec4(0.0);
+  gl_FragColor.rgb = hsv2rgb(vec3(angle, 1.0, mag));
+  gl_FragColor.a = 1.0;
 
 }
