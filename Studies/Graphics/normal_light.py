@@ -1,6 +1,12 @@
 #!/bin/python
 
-#Compute light from normal + albedo
+# Compute light from normal + albedo
+
+# Albedo image
+albedo_image = "albedo.png"
+
+# Normal image
+normal_image = "normal.png"
 
 # Light position
 position = [-10, 0, 3]
@@ -18,8 +24,8 @@ from PIL import Image
 import math
 
 def render(x, y, z, r, g, b, path):
-	albedo = Image.open("albedo.png")
-	normal = Image.open("normal.png")
+	albedo = Image.open(albedo_image)
+	normal = Image.open(normal_image)
 
 	lc = [r/255, g/255, b/255]
 	mag = math.sqrt(x*x+y*y+z*z)
@@ -32,7 +38,7 @@ def render(x, y, z, r, g, b, path):
 
 	for i in range(size[0]):
 		for j in range(size[1]):
-			li = l[0]*(n[i, j][0]/128 - 1) + l[1]*(n[i, j][1]/128 - 1) + l[2]*(n[i, j][2]/128 - 1)
+			li = l[0]*(n[i, j][0]/127 - 1) + l[1]*(n[i, j][1]/127 - 1) + l[2]*(n[i, j][2]/127 - 1)
 			if li < 0:
 				li = 0
 			o[i, j] = (int(a[i, j][0]*li*lc[0]), int(a[i, j][1]*li*lc[1]), int(a[i, j][2]*li*lc[2]))
