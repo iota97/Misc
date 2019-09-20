@@ -43,7 +43,7 @@ def add_light(x, y, z, r, g, b, s):
 			limg[i, j] = (min(limg[i,j][0]+int(li*r), 255), min(limg[i,j][1]+int(li*g), 255), min(limg[i,j][2]+int(li*b), 255))
 
 def render(path):
-	out = Image.new('RGB', size, s)
+	out = Image.new('RGB', size)
 	o = out.load()
 	limg = ll[s]
 	for i in range(size[0]):
