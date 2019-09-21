@@ -3,6 +3,7 @@
 # Compute light from normal + albedo
 
 # Using more step will make a rotating light series
+# ffmpeg -r 30 -i out%d.png -vcodec libx264 -pix_fmt yuv420p out.mp4
 step = 1
 
 # Albedo image
