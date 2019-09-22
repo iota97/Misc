@@ -3,11 +3,11 @@
 # Compute cartoon from normal + albedo
 
 # Light
-light_position = [1, 0.5, 1]
-light_color = [255, 255, 255]
+light_position = [3, 2, 5]
 
-# Highlight
-highlight_factor = 0.5
+# Highlight and shadow
+shadow_factor = 0.1
+highlight_factor = 0.97
 
 # Outline
 outline_threshold = 0.08
@@ -46,6 +46,7 @@ o = out.load()
 for i in range(size[0]):
 		for j in range(size[1]):
 
+			# Kernel edge detect
 			i0 = max(i-1, 0)
 			i1 = min(i+1, size[0]-1)
 			j0 = max(j-1, 0)
@@ -57,17 +58,18 @@ for i in range(size[0]):
 			f -= (a[i, j1][0]+a[i, j1][1]+a[i, j1][2])
 
 			if abs(f/1024) < outline_threshold:
-				s = max(l[0]*(n[i, j][0]/127-1)+l[1]*(n[i, j][2]/127-1)+l[2]*(n[i, j][2]/127-1), 0.0)
-				if s < highlight_factor:
+
+				# Normal lighting
+				s = l[0]*(n[i, j][0]/127-1)+l[1]*(n[i, j][1]/127-1)+l[2]*(n[i, j][2]/127-1)
+
+				if s > highlight_factor:
 					s = 1.5
+				elif s < -shadow_factor:
+					s = 0.5
 				else:
 					s = 1.0
-				
-				r = s*light_color[0]/255
-				g = s*light_color[1]/255
-				b = s*light_color[2]/255
 
-				o[i, j] = (int(round(a[i, j][0]*r/p)*p), int(round(a[i, j][1]*g/p)*p), int(round(a[i, j][2]*b/p)*p))
+				o[i, j] = (int(round(a[i, j][0]*s/p)*p), int(round(a[i, j][1]*s/p)*p), int(round(a[i, j][2]*s/p)*p))
 			else:
 				o[i, j] = (outline_color[0], outline_color[1], outline_color[2])
 
