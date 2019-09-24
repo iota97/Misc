@@ -1,0 +1,8 @@
+! Patch file for PPSSPP's FragmentShaderGeneratorGLES.cpp to view vertex color attribute
+
+481a482,483
+> 
+> 				WRITE(p, "  v = vec4(p.rgb, p.a*t.a);\n");
+507a510,511
+> 
+> 				WRITE(p, "  v = p;\n");			
