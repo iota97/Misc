@@ -1,13 +1,20 @@
-# Config per GRUB su USB live (Kali 2019.2, differenti distro hanno initrd.img in path diverse)
+# Config per GRUB su USB live (Kali 2019.2 e manjaro 18.10, differenti distro hanno initrd.img in path diverse)
 
 # chiavetta in fat32
 # sudo grub-install /dev/sdX --boot-directory=/mnt/point/boot/
 # config in boot/grub/grub.cfg
-# iso in boot/iso/kali.iso
+# iso in boot/iso/kali.iso e boot/iso/manjaro.iso
 
 menuentry 'Kali loopback' {
-	set isofile='/boot/iso/kali.iso'
-	loopback loop $isofile
-	linux (loop)/live/vmlinuz boot=live findiso=$isofile noconfig=sudo username=root hostname=kali
-	initrd (loop)/live/initrd.img
+	set iso_kali='/boot/iso/kali.iso'
+	loopback loop_kali $iso_kali
+	linux (loop_kali)/live/vmlinuz boot=live findiso=$iso_kali noconfig=sudo username=root hostname=kali
+	initrd (loop_kali)/live/initrd.img
+}
+
+menuentry 'Manjaro loopback' {
+	set iso_manjaro='/boot/iso/manjaro.iso'
+	loopback loop_manjaro $iso_manjaro
+	linux (loop_manjaro)/boot/vmlinuz-x86_64 img_dev=/dev/disk/by-uuid/${rootuuid} img_loop=${iso_manjaro}
+	initrd (loop_manjaro)/boot/intel_ucode.img (loop_manjaro)/boot/amd_ucode.img (loop_manjaro)/boot/initramfs-x86_64.img
 }
