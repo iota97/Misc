@@ -1,7 +1,6 @@
 // Interpola i valori dei vertici di un triangolo in un punto
 
-/* 
- non controlla l'appartenenza del punto al triangolo (usa fabs)
+/*
  non funziona con lati verticali (m = inf)
  il peso di ogni vertice è dato dall'area del triangolo tra punto e gli altri 2 vertici
  l'area deve essere divisa per l'area totale (totale 1)
@@ -43,9 +42,9 @@ int main()
 	float q1 = b.y - m1*b.x;
 	float l1 = sqrt((b.x-c.x)*(b.x-c.x)+(b.y-c.y)*(b.y-c.y));
 
-	float m2 = (c.y-a.y)/(c.x-a.x);	
-	float q2 = c.y - m2*c.x;
-	float l2 = sqrt((c.x-a.x)*(c.x-a.x)+(c.y-a.y)*(c.y-a.y));
+	// area del triangolo, coi segni
+	float det1 = 1.0/(l0*(c.y-(m0*c.x+q0))/sqrt(1+m0*m0));
+	float det2 = 1.0/(l1*(a.y-(m1*a.x+q1))/sqrt(1+m1*m1));
 
 	// cicliamo fino a un CTRL+C
 	for(;;)
@@ -55,13 +54,13 @@ int main()
 		scanf("%f %f", &p.x, &p.y);
 
 		// calcoliamo la distanza punto retta e la moltipliciamo per la "base"
-		float w0 = l0*fabs(p.y-(m0*p.x+q0))/sqrt(1+m0*m0);
-		float w1 = l1*fabs(p.y-(m1*p.x+q1))/sqrt(1+m1*m1);
-		float w2 = l2*fabs(p.y-(m2*p.x+q2))/sqrt(1+m2*m2);
+		float w0 = det1*l0*(p.y-(m0*p.x+q0))/sqrt(1+m0*m0);
+		float w1 = det2*l1*(p.y-(m1*p.x+q1))/sqrt(1+m1*m1);
+		float w2 = 1.0 - w0 - w1;
+		printf("(%f, %f, %f)\n", w0, w1, w2);
 
 		// interpoliamo
-		float sum = w0+w1+w2;
-		p.val = (a.val*w1+b.val*w2+c.val*w0)/sum;
+		p.val = a.val*w1+b.val*w2+c.val*w0;
 
 		// Print dei risultati
 		printf("Valore punto: %f\n", p.val);
