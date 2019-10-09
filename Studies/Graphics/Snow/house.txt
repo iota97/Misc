@@ -8,17 +8,17 @@
                                                                                 
                                                                                 
                                                                                 
-                              BBBBBBB                                           
-                             B       B                                          
-                            B         B                                         
-                           B           B                                        
-                          B             B                                       
-                         B               B                                      
-                        BA               AB                                     
-                       B A               A B                                    
-                         A               A         C     C                      
-                         A               A         C     C                      
-#                        A               A         C     C                     #
-#                        A               A         CCCCCCC                     #
-######          ################################################################
+                              BBBBBBBcccccccccccccccccccccccccccc               
+                             B       B                           d              
+                            B         B                           d             
+                           B           B                           d            
+                          B             B                           d           
+                         B               B                           d          
+                        BA               ABeeeeeeeeeeeeeeeeeeeeeeeeeeed         
+                       B A               A B                         f d        
+                         A               A                           f          
+ v           v           A               A                           f          
+  v         v            A               A                           f          
+   vvvvvvvvv             A               A                           f          
+################################################################################
 

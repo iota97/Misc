@@ -1,5 +1,9 @@
 // Snow simulator test
 
+#define SPEED 10
+#define SPAWN_RATEO 10
+#define FLUIDITY 1
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -62,44 +66,55 @@ void update()
 	// Spawn
 	for (int x = 0; x < 80; x++)
 	{
-		if (screen[x][0] == ' ' && rand() % 20 == 0)
+		if (screen[x][0] == ' ' && rand() % (int)(1000/SPAWN_RATEO) == 0)
 			screen[x][0] = '*';
 	}
 
-	// Drop
-	for (int y = 24; y >= 0; y--)
+	// Process
+	for (int y = 22; y >= 0; y--)
 	{
 		for (int x = 0; x < 80; x++)
 		{
 
-			if (y == 24 && screen[x][y] == '*')
-				screen[x][24] = ' ';
+			// Below screen
+			if (y == 22 && screen[x][y] == '*')
+				screen[x][y] = ' ';
 
+			// Move
 			if (screen[x][y] == '*')
 			{
+				// Drop
 				if (screen[x][y+1] == ' ')
 				{
 					screen[x][y] = ' ';
 					screen[x][y+1] = '*';
 				}
 
+				// Slide
 				else
 				{
 					int r = 1 - 2*(rand()%2);
-
-					if (x+r != -1 && x+r != 80)
-					{	
-						if (screen[x+r][y] == ' ')
+				
+					for(int i = 1; i <= FLUIDITY; i++)
+					{
+						// Side boundaries?
+						if (x+r*i != -1 && x+r*i != 80)
+						{	
+							if (screen[x+r*i][y] == ' ')
+							{
+								screen[x+r*(i-1)][y] = ' ';
+								screen[x+r*i][y] = '*';
+							}
+							else
+								break;	
+						}
+						else
 						{
-							screen[x][y] = ' ';
-							screen[x+r][y] = '*';
+							screen[x+r*(i-1)][y] = ' ';
 						}
 					}
-					else
-						screen[x][y] = ' ';
 				}
 			}
-		
 		}
 	}
 
@@ -123,7 +138,7 @@ int main(int argc, char** argv)
 	{
 		display();
 		update();
-		sleep_ms(100);
+		sleep_ms((int)1000/SPEED);
 	}	
 
 	return 0;
