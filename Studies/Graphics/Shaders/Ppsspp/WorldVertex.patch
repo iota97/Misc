@@ -1,0 +1,16 @@
+--- WorldVertex.cpp	2019-10-10 19:29:29.576798688 +0200
++++ VertexShaderGeneratorGLES.cpp	2019-10-10 19:33:29.435880457 +0200
+@@ -597,13 +597,6 @@
+ 		}
+ 
+ 		WRITE(p, "  vec4 viewPos = u_view * vec4(worldpos, 1.0);\n");
+-		
+-		WRITE(p, "  vec4 dist = u_proj*viewPos;\n");
+-		WRITE(p, "  if (dist.z > 0.0) {\n");
+-		WRITE(p, "    float ang = (dist.z*dist.z/dist.w)*0.00012;\n");
+-		WRITE(p, "    viewPos.y = cos(ang)*viewPos.y + sin(ang)*viewPos.z;\n");
+-		WRITE(p, "    viewPos.z = cos(ang)*viewPos.z - sin(ang)*viewPos.y;\n");
+-		WRITE(p, "  }\n");
+ 
+ 		// Final view and projection transforms.
+ 		if (gstate_c.Supports(GPU_ROUND_DEPTH_TO_16BIT)) {
