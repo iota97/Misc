@@ -1,16 +1,22 @@
---- WorldVertex.cpp	2019-10-10 19:29:29.576798688 +0200
-+++ VertexShaderGeneratorGLES.cpp	2019-10-10 19:33:29.435880457 +0200
-@@ -597,13 +597,6 @@
- 		}
+--- GPU/GLES/VertexShaderGeneratorGLES_orig.cpp	2019-10-11 15:24:43.114947000 +0200
++++ GPU/GLES/VertexShaderGeneratorGLES.cpp	2019-10-11 15:35:27.568483260 +0200
+@@ -598,6 +598,19 @@
  
  		WRITE(p, "  vec4 viewPos = u_view * vec4(worldpos, 1.0);\n");
--		
--		WRITE(p, "  vec4 dist = u_proj*viewPos;\n");
--		WRITE(p, "  if (dist.z > 0.0) {\n");
--		WRITE(p, "    float ang = (dist.z*dist.z/dist.w)*0.00012;\n");
--		WRITE(p, "    viewPos.y = cos(ang)*viewPos.y + sin(ang)*viewPos.z;\n");
--		WRITE(p, "    viewPos.z = cos(ang)*viewPos.z - sin(ang)*viewPos.y;\n");
--		WRITE(p, "  }\n");
  
++		const float far_cull = 0.995;
++		const float roll_factor = 0.00015;
++
++		WRITE(p, "  vec4 dist = u_proj*viewPos;\n");
++		WRITE(p, "  if (dist.z > 0.0 && dist.z/dist.w < %f) {\n", far_cull);
++		WRITE(p, "    float ang = (dist.z*dist.z/dist.w) * %f;\n", roll_factor);
++		WRITE(p, "    viewPos.y = cos(ang)*viewPos.y + sin(ang)*viewPos.z;\n");
++		WRITE(p, "    viewPos.z = cos(ang)*viewPos.z - sin(ang)*viewPos.y;\n");
++		WRITE(p, "  }\n");
++		WRITE(p, "  else {\n");
++		WRITE(p, "    viewPos.z = -1.0;\n");
++		WRITE(p, "  }\n");
++
  		// Final view and projection transforms.
  		if (gstate_c.Supports(GPU_ROUND_DEPTH_TO_16BIT)) {
+ 			WRITE(p, "  vec4 outPos = depthRoundZVP(u_proj * viewPos);\n");
