@@ -1,0 +1,11 @@
+--- VertexShaderGeneratorGLES_orig.cpp	2019-10-11 15:24:43.114947000 +0200
++++ VertexShaderGeneratorGLES.cpp	2019-10-13 00:07:59.072089397 +0200
+@@ -598,6 +598,8 @@
+ 
+ 		WRITE(p, "  vec4 viewPos = u_view * vec4(worldpos, 1.0);\n");
+ 
++		WRITE(p, "  viewPos.z += 550*viewPos.w;\n");
++
+ 		// Final view and projection transforms.
+ 		if (gstate_c.Supports(GPU_ROUND_DEPTH_TO_16BIT)) {
+ 			WRITE(p, "  vec4 outPos = depthRoundZVP(u_proj * viewPos);\n");
