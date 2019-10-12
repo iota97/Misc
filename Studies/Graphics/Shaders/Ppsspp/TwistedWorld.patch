@@ -1,0 +1,19 @@
+--- VertexShaderGeneratorGLES_orig.cpp	2019-10-11 15:24:43.114947000 +0200
++++ VertexShaderGeneratorGLES.cpp	2019-10-12 23:44:11.029526243 +0200
+@@ -598,6 +598,16 @@
+ 
+ 		WRITE(p, "  vec4 viewPos = u_view * vec4(worldpos, 1.0);\n");
+ 
++		const float fac = 0.00025;
++		WRITE(p, "  float cos_rot = cos(viewPos.z/viewPos.w * %f);\n", fac);
++		WRITE(p, "  float sin_rot = sin(viewPos.z/viewPos.w * %f);\n", fac);
++		WRITE(p, "  vec4 c0 = vec4(cos_rot, sin_rot, 0.0, 0.0);\n");
++		WRITE(p, "  vec4 c1 = vec4(-sin_rot, cos_rot, 0.0, 0.0);\n");
++		WRITE(p, "  vec4 c2 = vec4(0.0, 0.0, 1.0, 0.0);\n");
++		WRITE(p, "  vec4 c3 = vec4(0.0, 0.0, 0.0, 1.0);\n");
++		WRITE(p, "  mat4 rot_matrix = mat4(c0, c1, c2, c3);\n");
++		WRITE(p, "  viewPos = rot_matrix * viewPos;\n");
++
+ 		// Final view and projection transforms.
+ 		if (gstate_c.Supports(GPU_ROUND_DEPTH_TO_16BIT)) {
+ 			WRITE(p, "  vec4 outPos = depthRoundZVP(u_proj * viewPos);\n");
