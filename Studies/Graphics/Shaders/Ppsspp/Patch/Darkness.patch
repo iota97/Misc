@@ -1,0 +1,11 @@
+--- VertexShaderGeneratorGLES_orig.cpp	2019-10-11 15:24:43.114947000 +0200
++++ VertexShaderGeneratorGLES.cpp	2019-10-14 19:01:03.804856079 +0200
+@@ -758,6 +758,8 @@
+ 				WRITE(p, "  v_color1 = vec3(0.0);\n");
+ 		}
+ 
++		WRITE(p, "  v_color0.rgb *= clamp(1.0 - 15.0*abs(outPos.z/outPos.w-0.9) - abs(outPos.x/outPos.w), 0.0, 1.0);\n");
++
+ 		// Step 3: UV generation
+ 		if (doTexture) {
+ 			switch (uvGenMode) {
