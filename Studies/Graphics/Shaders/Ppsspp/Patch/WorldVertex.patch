@@ -9,9 +9,9 @@
 +
 +		WRITE(p, "  vec4 dist = u_proj*viewPos;\n");
 +		WRITE(p, "  if (dist.z > 0.0 && dist.z/dist.w < %f) {\n", far_cull);
-+		WRITE(p, "    float ang = (dist.z*dist.z/dist.w) * %f;\n", roll_factor);
++		WRITE(p, "    float ang = (dist.z*dist.z/dist.w) * %f; vec3 v = viewPos.xyz;\n", roll_factor);
 +		WRITE(p, "    viewPos.y = cos(ang)*viewPos.y + sin(ang)*viewPos.z;\n");
-+		WRITE(p, "    viewPos.z = cos(ang)*viewPos.z - sin(ang)*viewPos.y;\n");
++		WRITE(p, "    viewPos.z = cos(ang)*v.z - sin(ang)*v.y;\n");
 +		WRITE(p, "  }\n");
 +		WRITE(p, "  else {\n");
 +		WRITE(p, "    viewPos.z = -1.0;\n");
