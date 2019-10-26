@@ -15,8 +15,10 @@
 	AND &
 	OR v
 	NOT !
+	IMP ->
+	EQ <->
 
-	Es:  A&!A, BvC, !Av(A&B)
+	Es:  A&!A, BvC, A<->!A, (AvB)->(C&D)
 
 */
 
@@ -72,12 +74,13 @@ static const char *intro =
     "    bool Z = i&(1 << 25);\n"
 
     "    if (i < n) {\n"
-    "       out[i] = ";
+    "       if(";
 
+static char pre_cmd[65536];
 static char cmd[65536];
 
 static const char *outro  =
-    ";\n    }\n"
+    ") out[0] = 1; else out[1] = 1;\n    }\n"
     "}\n";
 
 int main(int argc, char** argv) {
@@ -132,7 +135,7 @@ int main(int argc, char** argv) {
 	}
 
 	// Crea il comando
-	char* p = (char*) cmd;
+	char* p = (char*) pre_cmd;
 	char c;
     	while ((c = fgetc(fi)) != EOF) {
 
@@ -146,12 +149,84 @@ int main(int argc, char** argv) {
 			*p++ = '|';
 		}
 
+		else if(c == '<') { // A<->B   A==B
+			*p++ = '=';
+			*p++ = '=';
+			fgetc(fi);
+			fgetc(fi);
+		}
+
 		else {
 			*p++ = c;
 		}
 	}
-
+	*++p = '\0';
 	fclose(fi);
+
+	p = (char*) pre_cmd;
+	char *n = (char*) cmd;
+
+	while ((c = *p++) != '\0') {// A->B   !A||(A&&B)
+
+		*n++ = c;
+
+		if (c == '-') {
+			char A[4096];
+			char B[4096];
+
+			int A_par = 0;
+			char* A_last = p-2;
+			char* A_first = A_last;
+			do {
+				char a = *A_first;
+				A_first--;
+				if (a == ')')
+					A_par++;
+				if (a == '(')
+					A_par--;
+
+			} while(A_par != 0);
+
+			for (int i = 1; i <= A_last-A_first; ++i) {
+				A[i-1] = *(A_first+i);
+			}
+
+			int B_par = 0;
+			char* B_first = p+1;
+			char* B_last = B_first;
+			do {
+				char b = *B_last;
+				B_last++;
+				if (b == '(')
+					B_par++;
+				if (b == ')')
+					B_par--;
+
+			} while(B_par != 0);
+
+			for (int i = 0; i < B_last-B_first; ++i) {
+				B[i] = *(B_first+i);
+			}
+
+			n -= (A_last-A_first)+1;
+			
+			*n++ = '!';
+			for (int i = 1; i <= A_last-A_first; ++i)
+				*n++ = A[i-1];
+			*n++ = '|';
+			*n++ = '|';
+			*n++ = '(';
+			for (int i = 1; i <= A_last-A_first; ++i)
+				*n++ = A[i-1];
+			*n++ = '&';
+			*n++ = '&';
+			for (int i = 0; i < B_last-B_first; ++i)
+				*n++ = B[i];
+			*n++ = ')';
+			p += B_last-B_first+1;
+			
+		}
+	}
  
 	char *source = (char*) malloc(sizeof(char)*(strlen(intro)+strlen(cmd)+strlen(outro)));
 	strcpy(source, intro);
@@ -175,7 +250,7 @@ int main(int argc, char** argv) {
 
 	cl::Kernel run(program, "run");
 
-	std::vector<short> out(N);
+	std::vector<short> out(2);
 
 	cl::Buffer OUT(context, CL_MEM_READ_WRITE,
 		out.size() * sizeof(short));
@@ -183,8 +258,6 @@ int main(int argc, char** argv) {
 	// Set kernel parameters.
 	run.setArg(0, static_cast<cl_ulong>(N));
 	run.setArg(1, OUT);
-
-	std::cout << device[0].getInfo<CL_DEVICE_NAME>() << ": Pronto!\nComando: " << cmd << std::endl;
 	
 	// Launch kernel on the compute device.
 	queue.enqueueNDRangeKernel(run, cl::NullRange, N, cl::NullRange);
@@ -192,19 +265,15 @@ int main(int argc, char** argv) {
 	// Get result back to host.
 	queue.enqueueReadBuffer(OUT, CL_TRUE, 0, out.size() * sizeof(short), out.data());
 
-	bool fal = false;
-	bool tru = false;
-	for (int i = 0; i < (1 << 6); ++i) {
-		if (out[i]) tru = true;
-		if (!out[i]) fal = true;
-	}
+	bool fal = out[1];
+	bool tru = out[0];
 
 	if (tru && fal)
-		std::cout << "Risultato: Opinione" << std::endl;
+		std::cout << "Opinione" << std::endl;
 	else if (tru)
-		std::cout << "Risultato: Tautologia" << std::endl;
+		std::cout << "Tautologia" << std::endl;
 	else
-		std::cout << "Risultato: Paradosso" << std::endl;
+		std::cout << "Paradosso" << std::endl;
 
     } catch (const cl::Error &err) {
 	std::cerr
