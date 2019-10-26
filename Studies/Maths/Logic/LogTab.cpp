@@ -8,11 +8,16 @@
 
  File di input:
 
-	6 variabili da a[i] a f[i]
+	26 variabili da A a Z
 
-	Es:  a[i] && !a[i];
+	Operazioni:
+		
+	AND &
+	OR v
+	NOT !
 
-	Es:  (!a[i] || (a[i] && b[i])) || !b[i] || (b[i] && a[i]);
+	Es:  A&!A, BvC, !Av(A&B)
+
 */
 
 
@@ -34,23 +39,45 @@ static const char *intro =
     "#endif\n"
     "kernel void run(\n"
     "       ulong n,\n"
-    "       global short *out,\n"
-    "       global const short *a,\n"
-    "       global const short *b,\n"
-    "       global const short *c,\n"
-    "       global const short *d,\n"
-    "       global const short *e,\n"
-    "       global const short *f\n"
+    "       global short *out\n"
     "       )\n"
     "{\n"
     "    size_t i = get_global_id(0);\n"
+
+    "    bool A = i&(1 << 0);\n"
+    "    bool B = i&(1 << 1);\n"
+    "    bool C = i&(1 << 2);\n"
+    "    bool D = i&(1 << 3);\n"
+    "    bool E = i&(1 << 4);\n"
+    "    bool F = i&(1 << 5);\n"
+    "    bool G = i&(1 << 6);\n"
+    "    bool H = i&(1 << 7);\n"
+    "    bool I = i&(1 << 8);\n"
+    "    bool J = i&(1 << 9);\n"
+    "    bool K = i&(1 << 10);\n"
+    "    bool L = i&(1 << 11);\n"
+    "    bool M = i&(1 << 12);\n"
+    "    bool N = i&(1 << 13);\n"
+    "    bool O = i&(1 << 14);\n"
+    "    bool P = i&(1 << 15);\n"
+    "    bool Q = i&(1 << 16);\n"
+    "    bool R = i&(1 << 17);\n"
+    "    bool S = i&(1 << 18);\n"
+    "    bool T = i&(1 << 19);\n"
+    "    bool U = i&(1 << 20);\n"
+    "    bool V = i&(1 << 21);\n"
+    "    bool W = i&(1 << 22);\n"
+    "    bool X = i&(1 << 23);\n"
+    "    bool Y = i&(1 << 24);\n"
+    "    bool Z = i&(1 << 25);\n"
+
     "    if (i < n) {\n"
     "       out[i] = ";
 
 static char cmd[65536];
 
 static const char *outro  =
-    "\n    }\n"
+    ";\n    }\n"
     "}\n";
 
 int main(int argc, char** argv) {
@@ -104,7 +131,25 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-    	fread (cmd, 1, 65536, fi);
+	// Crea il comando
+	char* p = (char*) cmd;
+	char c;
+    	while ((c = fgetc(fi)) != EOF) {
+
+		if(c == '&') { // A&B   A&&B
+			*p++ = '&';
+			*p++ = '&';
+		}
+
+		else if(c == 'v') { // AvB   A||B
+			*p++ = '|';
+			*p++ = '|';
+		}
+
+		else {
+			*p++ = c;
+		}
+	}
 
 	fclose(fi);
  
@@ -130,42 +175,7 @@ int main(int argc, char** argv) {
 
 	cl::Kernel run(program, "run");
 
-	// Prepare input data.
-	std::vector<short> a(N);
-	std::vector<short> b(N);
-	std::vector<short> c(N);
-	std::vector<short> d(N);
-	std::vector<short> e(N);
-	std::vector<short> f(N);
 	std::vector<short> out(N);
-
-	for (int i = 0; i < (1 << 6); ++i) {
-		a[i]=!(i&1);
-		b[i]=!(i&2);
-		c[i]=!(i&4);
-		d[i]=!(i&8);
-		e[i]=!(i&16);
-		f[i]=!(i&32);
-	}
-
-	// Allocate device buffers and transfer input data to device.
-	cl::Buffer A(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		a.size() * sizeof(short), a.data());
-
-	cl::Buffer B(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		b.size() * sizeof(short), b.data());
-
-	cl::Buffer C(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		c.size() * sizeof(short), c.data());
-
-	cl::Buffer D(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		d.size() * sizeof(short), d.data());
-
-	cl::Buffer E(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		e.size() * sizeof(short), e.data());
-
-	cl::Buffer F(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		f.size() * sizeof(short), f.data());
 
 	cl::Buffer OUT(context, CL_MEM_READ_WRITE,
 		out.size() * sizeof(short));
@@ -173,14 +183,8 @@ int main(int argc, char** argv) {
 	// Set kernel parameters.
 	run.setArg(0, static_cast<cl_ulong>(N));
 	run.setArg(1, OUT);
-	run.setArg(2, A);
-	run.setArg(3, B);
-	run.setArg(4, C);
-	run.setArg(5, D);
-	run.setArg(6, E);
-	run.setArg(7, F);
 
-	std::cout << device[0].getInfo<CL_DEVICE_NAME>() << ": Pronto!" << std::endl;
+	std::cout << device[0].getInfo<CL_DEVICE_NAME>() << ": Pronto!\nComando: " << cmd << std::endl;
 	
 	// Launch kernel on the compute device.
 	queue.enqueueNDRangeKernel(run, cl::NullRange, N, cl::NullRange);
@@ -196,11 +200,11 @@ int main(int argc, char** argv) {
 	}
 
 	if (tru && fal)
-		std::cout << "Opinione" << std::endl;
+		std::cout << "Risultato: Opinione" << std::endl;
 	else if (tru)
-		std::cout << "Tautologia" << std::endl;
+		std::cout << "Risultato: Tautologia" << std::endl;
 	else
-		std::cout << "Paradosso" << std::endl;
+		std::cout << "Risultato: Paradosso" << std::endl;
 
     } catch (const cl::Error &err) {
 	std::cerr
