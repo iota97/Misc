@@ -32,12 +32,10 @@
 
 static const char *intro =
     "kernel void run(\n"
-    "       ulong n,\n"
     "       global short *out\n"
     "       )\n"
     "{\n"
     "    size_t i = get_global_id(0);\n"
-
     "    bool A = i&(1 << 0);\n"
     "    bool B = i&(1 << 1);\n"
     "    bool C = i&(1 << 2);\n"
@@ -64,16 +62,13 @@ static const char *intro =
     "    bool X = i&(1 << 23);\n"
     "    bool Y = i&(1 << 24);\n"
     "    bool Z = i&(1 << 25);\n"
-
-    "    if (i < n) {\n"
-    "       if(";
+    "    if(";
 
 static char pre_cmd[65536];
 static char cmd[65536];
 
 static const char *outro  =
-    ") out[0] = 1; else out[1] = 1;\n    }\n"
-    "}\n";
+    ") out[0] = 1; else out[1] = 1;\n    }\n";
 
 int main(int argc, char** argv) {
 
@@ -81,8 +76,6 @@ int main(int argc, char** argv) {
 	std::cout << "Sintassi: LogTab <input_file.txt>" << std::endl;
 	return 1;
     }
-
-    const size_t N = 1 << 2;
 
     try {
 	// Get list of OpenCL platforms.
@@ -251,11 +244,10 @@ int main(int argc, char** argv) {
 		out.size() * sizeof(short), out.data());
 
 	// Set kernel parameters.
-	run.setArg(0, static_cast<cl_ulong>(N));
-	run.setArg(1, OUT);
+	run.setArg(0, OUT);
 	
 	// Launch kernel on the compute device.
-	queue.enqueueNDRangeKernel(run, cl::NullRange, N, cl::NullRange);
+	queue.enqueueNDRangeKernel(run, cl::NullRange, 1<<20, cl::NullRange);
 
 	// Get result back to host.
 	queue.enqueueReadBuffer(OUT, CL_TRUE, 0, out.size() * sizeof(short), out.data());
