@@ -30,15 +30,7 @@
 #define __CL_ENABLE_EXCEPTIONS
 #include <CL/cl.hpp>
 
-// Compute c = a + b.
 static const char *intro =
-    "#if defined(cl_khr_fp64)\n"
-    "#  pragma OPENCL EXTENSION cl_khr_fp64: enable\n"
-    "#elif defined(cl_amd_fp64)\n"
-    "#  pragma OPENCL EXTENSION cl_amd_fp64: enable\n"
-    "#else\n"
-    "#  error double precision is not supported\n"
-    "#endif\n"
     "kernel void run(\n"
     "       ulong n,\n"
     "       global short *out\n"
@@ -90,7 +82,7 @@ int main(int argc, char** argv) {
 	return 1;
     }
 
-    const size_t N = 1 << 20;
+    const size_t N = 1 << 2;
 
     try {
 	// Get list of OpenCL platforms.
@@ -231,7 +223,8 @@ int main(int argc, char** argv) {
 	char *source = (char*) malloc(sizeof(char)*(strlen(intro)+strlen(cmd)+strlen(outro)));
 	strcpy(source, intro);
 	strcpy(source+strlen(intro), cmd);
-	strcpy(source+strlen(intro)+strlen(cmd), outro);
+	int back = cmd[strlen(cmd)-1] == '\n';
+	strcpy(source+strlen(intro)+strlen(cmd)-back, outro);
 
 	// Compile OpenCL program for found device.
 	cl::Program program(context, cl::Program::Sources(
@@ -251,9 +244,11 @@ int main(int argc, char** argv) {
 	cl::Kernel run(program, "run");
 
 	std::vector<short> out(2);
+	out[0] = 0;
+	out[1] = 0;
 
-	cl::Buffer OUT(context, CL_MEM_READ_WRITE,
-		out.size() * sizeof(short));
+	cl::Buffer OUT(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+		out.size() * sizeof(short), out.data());
 
 	// Set kernel parameters.
 	run.setArg(0, static_cast<cl_ulong>(N));
