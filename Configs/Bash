@@ -3,4 +3,4 @@
 PS1="\e[01;32m[\e[37m\$?\e[32m]\u@\h\e[37m \w \e[32m> \e[37m\n"
 
 # Native cmake
-alias natclang-cmake='CC=clang CXX=clang++ CFLAGS="-march=native" CXXFLAGS="-march=native" cmake'
+alias native-cmake='CFLAGS="-march=native" CXXFLAGS="-march=native" cmake'
