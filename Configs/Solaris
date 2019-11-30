@@ -1,0 +1,40 @@
+Solaris sparc 2.9 [511b969c23e660bd50535d3cce4b0ba907983ea3f4371c1722506b512b49616b807f01ca2cd076f8c921f4fc5eb2d42c32f5efef589065ea61055189acaa5f35]
+
+Create disk file:
+
+	qemu-img create -f qcow2 disk.img 9G
+
+Start install:
+
+	qemu-system-sparc -drive file=disk.img,if=scsi,bus=0,unit=0,media=disk -drive file=cdrom.iso,format=raw,if=scsi,bus=0,unit=2,media=cdrom,readonly=on -boot d
+
+Prepare the disk:
+
+	exit prompt with 'Q'
+
+	format
+
+   	 	 Specify disk (enter its number): 0
+   		 Specify disk type (enter its number): 16
+   	 	 Enter number of data cylinders: 16381
+   	 	 ...defaults are fine here...
+  	 	 Enter number of heads: 16
+  		 ...
+  		 Enter number of data sectors/track: 63
+  		 ...
+   		 Enter disk type name (remember quotes): Qemu9G
+
+	label
+	quit
+
+	reboot
+
+	Format the disk (y, y, y...)
+
+Install:
+
+	default install
+
+Start system:
+
+	qemu-system-sparc -drive file=disk.img,if=scsi,bus=0,unit=0,media=disk -drive file=cdrom.iso,format=raw,if=scsi,bus=0,unit=2,media=cdrom,readonly=on
