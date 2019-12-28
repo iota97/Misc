@@ -136,13 +136,13 @@ int main(int argc, char* argv[])
 	}	
 
 	// Setup scene
-	scene.sphere_center.x = atof(argv[1]);
-	scene.sphere_center.y = atof(argv[2]);
-	scene.sphere_center.z = atof(argv[3]);
+	scene.sphere_center.x = atof(argv[1])/100.0;
+	scene.sphere_center.y = atof(argv[2])/-100.0;
+	scene.sphere_center.z = atof(argv[3])/100.0;
 	scene.sphere_radius = atof(argv[4])/10.0;
-	scene.cube_center.x = atof(argv[5]);
-	scene.cube_center.y = atof(argv[6]);
-	scene.cube_center.z = atof(argv[7]);
+	scene.cube_center.x = atof(argv[5])/100.0;
+	scene.cube_center.y = atof(argv[6])/-100.0;
+	scene.cube_center.z = atof(argv[7])/100.0;
 	scene.cube_size = atof(argv[8])/10.0;
 	scene.operation = atoi(argv[9]);
 	scene.step = atoi(argv[10]);
