@@ -1,50 +1,35 @@
-/* 6DoF 3D model church 
+// cc church.c -O2 -o church -lncurses
 
-Compile with:
-
-cc church.c -O2 -o church -lncurses
-
-Controls:
-
-W - forward
-S - backward
-A - left
-D - right
-
-SPACE - up
-C - down
-
-I - camera up
-K - camera down
-J - camera left
-L - camera right
-
-Q - camera roll left
-E - camera roll right
-
-ENTER - exit
-
-*/
-
-/* Headers */
 #include <stdio.h>
 #include <stdlib.h>
 #include <curses.h>
 
-/* Speed config */
+#define PI 3.14159265358979f
+#define NEAR_PLANE 0.2f
+#define LIGHT_POS_X 1.0f
+#define LIGHT_POS_Y 2.0f
+#define LIGHT_POS_Z 0.0f
+#define SHADOW_CHAR '!'
+#define LIGHT_CHAR '#'
+#define FONT_RATEO 0.5f
 #define CAM_ROT 0.1f
 #define CAM_MOT 0.5f
 
-/* Math const */
-#define PI 3.14159265359f
-
-/* Rendering const */
-#define NEAR_PLANE 1
-#define FAR_PLANE 8192
-#define FOG_COLOR 1
-
-/* Font width/height rateo */
-#define FONT_RATEO 0.5f
+int parse_obj(char* path);
+void translate(float x, float y, float z);
+void update_transform(float update[4][4]);
+void scale(float x, float y, float z);
+void rotate_x(float x);
+void rotate_y(float y);
+void rotate_z(float z);
+void clear_buffer(void);
+void restore_mesh(void);
+void render_to_buffer(void);
+void clear_screen(void);
+void draw_screen(void);
+void show_help(void);
+void create_buffer(int width, int height);
+void loop_input(void);
 
 /* Vertex stuct */
 typedef struct vertex 
@@ -52,20 +37,18 @@ typedef struct vertex
 	float x;
 	float y;
 	float z;
-	int color;
 } vertex_t;
 
-/* Tris counter */
-static unsigned int tris_count = 0;
-
-/* Tris Buffer */
-static vertex_t *tris_buffer = NULL;
+/* Tris and vertex buffer */
+static int tris_count = 0;
+static int *tris_buffer = NULL;
+static vertex_t* vertex_buffer = NULL;
 
 /* Screen and depth buffer */
 static int buffer_width = 0;
 static int buffer_height = 0;
-static int *screen = NULL;
-static float *depth = NULL;
+static char *screen_buffer = NULL;
+static float *depth_buffer = NULL;
 
 /* Screen rateo based on screen height, width and font rateo */
 static float screen_rateo;
@@ -73,42 +56,11 @@ static float screen_rateo;
 /* Transform matrix */
 static float transform[4][4];
 
-/* Prototype */
-float absolute(float x);
-float normalized_angle(float x);
-float sine(float x);
-float cosine(float x);
-void load_world(void);
-void update_transform(float update[4][4]);
-void move_camera(float x, float y, float z);
-void rotate_x(float x);
-void rotate_y(float y);
-void rotate_z(float z);
-void clear_buffer(void);
-void restore_position(void);
-void render_to_buffer(void);
-void draw(void);
-void create_buffer(int width, int height);
-void exit_game(void);
-void loop_game(void);
-void init_game(void);
-
-/* Calculate the absolute value */
-float absolute(float x)
-{
-	return x > 0 ? x : -x;
-}
-
 /* Normalize rotation between 0 and 2PI */
 float normalized_angle(float x)
 {
-	if (x < 0)
-		x += 2*PI*((int)(-x/(2*PI))+1);
-	else 
-		x -= 2*PI*(int)(x/(2*PI));
-
-	return x;
-}	
+	return (x < 0) ? x + 2*PI*((int)(-x/(2*PI))+1) : x - 2*PI*(int)(x/(2*PI));
+}
 
 /* Sine */
 float sine(float x)
@@ -117,7 +69,7 @@ float sine(float x)
 
 	/* Normalize the rotation */
 	x = normalized_angle(x);
-		
+
 	/* Check sign */
 	if (x < PI)
 		sign = 1;
@@ -164,7 +116,7 @@ float cosine(float x)
 
 	/* Normalize the rotation */
 	x = normalized_angle(x);
-		
+
 	/* Check sign */
 	if (x < PI/2 || x >= 3*PI/2)
 		sign = 1;
@@ -191,7 +143,7 @@ float cosine(float x)
 	else
 	{
 		float x2, x3, sine;
-	
+
 		/* Transform to sine */
 		x = PI/2 - x;
 
@@ -205,16 +157,21 @@ float cosine(float x)
 }
 
 /* Read the mesh file */
-void load_world() 
+int parse_obj(char* path) 
 {
-	int vertex_count = 0;
-	int color = 0;
+	static unsigned int vertex_count = 0;
 	char line_buffer[1024];
-	FILE* world_file = fopen("church.obj", "r");
-	vertex_t* vertex_buffer = NULL;
+	FILE* mesh_file = fopen(path, "r");
+
+	/* Check the read to be succefull */
+	if (mesh_file == NULL)
+	{
+		printf("Error reading file %s\n", path);
+		return 1;
+	}	
 
 	/* Cycle the file once to get the vertex and tris count */
-	while(fgets(line_buffer, 1024, world_file)) 
+	while(fgets(line_buffer, 1024, mesh_file)) 
 	{
 		/* Count vertex */
 		if (line_buffer[0] == 'v' && line_buffer[1] == ' ') 
@@ -223,29 +180,49 @@ void load_world()
 		/* Count tris */
 		else if (line_buffer[0] == 'f' && line_buffer[1] == ' ')
 		{
+			int test_vertex;
+
+			/* Parse the first tris */
+			sscanf(line_buffer, "%*s %*s %*s %*s %[^\n]", line_buffer);
+
 			/* Increase tris count */
 			tris_count++;
+			
+			/* Parse other tris if the face have more vertex */
+			while (sscanf(line_buffer, "%d/", &test_vertex) == 1)
+			{
+				/* Increase tris count */
+				tris_count++;
+
+				/* Remove already parsed face and keep looping if other are present */
+				if (sscanf(line_buffer, "%*s %[^\n]", line_buffer) != 1)
+					break;
+			}
 		}
 	}
 
-	/* Check to have tris and vertex */
-	if (tris_count == 0 || vertex_count == 0)
-		return;
+	/* Check vertex and tris count */
+	if (vertex_count == 0 || tris_count == 0)
+	{
+		printf("Corrupted file %s\n", path);
+		return 1;
+	}
 
-	/* Free previous tris  */
+	/* Free previous tris and vertex */
 	free(tris_buffer);
+	free(vertex_buffer);
 
 	/* Alloc the memory */
-	vertex_buffer = (vertex_t*) malloc((unsigned int)vertex_count * sizeof(vertex_t));
-	tris_buffer = (vertex_t*) malloc((unsigned int)tris_count * sizeof(vertex_t) * 3);
+	vertex_buffer = (vertex_t*) malloc(vertex_count * sizeof(vertex_t));
+	tris_buffer = (int*) malloc(tris_count * sizeof(int) * 3);
 
 	/* Reset the counter and rewind the file */
 	vertex_count = 0;
 	tris_count = 0;
-	rewind(world_file);
+	rewind(mesh_file);
 
 	/* Cycle again, reading the data */
-	while(fgets(line_buffer, 1024, world_file)) 
+	while(fgets(line_buffer, 1024, mesh_file)) 
 	{
 		/* Read vertex data */
 		if (line_buffer[0] == 'v' && line_buffer[1] == ' ') 
@@ -258,38 +235,56 @@ void load_world()
 			vertex_count++;
 		}
 
-		/* Read material */
-		else if (line_buffer[0] == 'u')
-		{
-			sscanf(line_buffer, "%*s %u", &color);
-		}
-
 		/* Read face data */
 		else if (line_buffer[0] == 'f' && line_buffer[1] == ' ') 
 		{
 			/* Parse the first tris */
 			int vertex0, vertex1, vertex2;
-			sscanf(line_buffer, "%*s %u/%*s %u/%*s %u/%*s %[^\n]",
+			sscanf(line_buffer, "%*s %d/%*s %d/%*s %d/%*s %[^\n]",
 				&vertex0, &vertex1, &vertex2, line_buffer);
 
 			/* Bind the vertex */
-			tris_buffer[tris_count*3+0] = vertex_buffer[vertex0-1];
-			tris_buffer[tris_count*3+1] = vertex_buffer[vertex1-1];
-			tris_buffer[tris_count*3+2] = vertex_buffer[vertex2-1];
-
-			/* Bind the color to the first vertex */
-			tris_buffer[tris_count*3].color = color;
+			tris_buffer[tris_count*3+0] = vertex0-1;
+			tris_buffer[tris_count*3+1] = vertex1-1;
+			tris_buffer[tris_count*3+2] = vertex2-1;
 
 			/* Increase tris count */
 			tris_count++;
+			
+			/* Parse other tris if the face have more vertex */
+			while (sscanf(line_buffer, "%d/", &vertex1) == 1)
+			{
+				/* Bind the vertex0, the new vertex and the last as a tris */
+				tris_buffer[tris_count*3+0] = vertex0-1;
+				tris_buffer[tris_count*3+1] = vertex1-1;
+				tris_buffer[tris_count*3+2] = vertex2-1;
+
+				/* Set vertex2 as our new last vertex */
+				vertex2 = vertex1;			
+				
+				/* Increase tris count */
+				tris_count++;
+
+				/* Remove already parsed face and keep looping if other are present */
+				if (sscanf(line_buffer, "%*s %[^\n]", line_buffer) != 1)
+					break;
+			}
 		}
 	}
 
-	/* Free the vertex buffer */
-	free(vertex_buffer);
-
 	/* Close the file */
-	fclose(world_file);
+	fclose(mesh_file);
+
+	return 0;
+}
+
+/* Translate the mesh */
+void translate(float x, float y, float z) 
+{
+	/* Add translation directly to the matrix */
+	transform[3][0] -= x;
+	transform[3][1] += y;
+	transform[3][2] += z;
 
 	return;
 }
@@ -355,7 +350,6 @@ void move_camera(float x, float y, float z)
 
 	return;
 }
-
 /* Rotate on X axis */
 void rotate_x(float x)
 {
@@ -446,13 +440,13 @@ void rotate_z(float z)
 /* Clear the screen and depth buffer */
 void clear_buffer()
 {
-	int i, j;
-	for (i = 0; i < buffer_width; i++)
-	{
-		for (j = 0; j < buffer_height; j++)
+	int row, col;
+	for (row = 0; row < buffer_height; row++)
+	{	
+		for (col = 0; col < buffer_width; col++)
 		{
-			screen[i+j*buffer_width] = FOG_COLOR;
-			depth[i+j*buffer_width] = FAR_PLANE;
+			screen_buffer[col+row*buffer_width] = ' ';
+			depth_buffer[col+row*buffer_width] = 0;
 		}
 	}
 
@@ -460,19 +454,19 @@ void clear_buffer()
 }
 
 /* Restore position */
-void restore_position()
+void restore_mesh()
 {
-	unsigned int i, j;
+	int row, col;
 	
 	/* Restore identity matrix */
-	for (i = 0; i < 4; i++)
+	for (col = 0; col < 4; col++)
 	{
-		for (j = 0; j < 4; j++)
+		for (row = 0; row < 4; row++)
 		{
-			if (i == j)
-				transform[i][j] = 1;
+			if (col == row)
+				transform[col][row] = 1;
 			else
-				transform[i][j] = 0;
+				transform[col][row] = 0;
 		}
 	}
 
@@ -482,13 +476,16 @@ void restore_position()
 /* Render to screen buffer */
 void render_to_buffer()
 {
-	unsigned int i, j;
+	int tris, vertex;
 	int x, y;
+
+	/* Used for near plane culling when we split a tris in 2 */
+	int last_half_rendered = 0;
 
 	/* Clear before start */
 	clear_buffer();
 
-	for (i = 0; i < tris_count; i++) 
+	for (tris = 0; tris < tris_count; tris++) 
 	{
 		/* Barycentric coordinate determinant */
 		float determinant;
@@ -498,49 +495,195 @@ void render_to_buffer()
 		int min_y = buffer_height-1;
 		int max_x = 0;
 		int max_y = 0;
-
-		/* Raster the vertex to screen */
-		float x_array[3], y_array[3];
+		int behind_near = 0;
 
 		/* Transformed vertex */
-		vertex_t vertex[3];
+		vertex_t vertex_arr[3];
 
-		for (j = 0; j < 3; j++)
+		/* Face normal and lighting */
+		vertex_t normal, edge0, edge1;
+		float normal_mag, light;
+
+		for (vertex = 0; vertex < 3; vertex++)
 		{
 			/* Multiply with transform matrix */
-			vertex[j].x = transform[0][0]*tris_buffer[i*3+j].x+
-					transform[1][0]*tris_buffer[i*3+j].y+
-					transform[2][0]*tris_buffer[i*3+j].z+
+			vertex_arr[vertex].x = transform[0][0]*vertex_buffer[tris_buffer[tris*3+vertex]].x+
+					transform[1][0]*vertex_buffer[tris_buffer[tris*3+vertex]].y+
+					transform[2][0]*vertex_buffer[tris_buffer[tris*3+vertex]].z+
 					transform[3][0];
 
-			vertex[j].y = transform[0][1]*tris_buffer[i*3+j].x+
-					transform[1][1]*tris_buffer[i*3+j].y+
-					transform[2][1]*tris_buffer[i*3+j].z+
+			vertex_arr[vertex].y = transform[0][1]*vertex_buffer[tris_buffer[tris*3+vertex]].x+
+					transform[1][1]*vertex_buffer[tris_buffer[tris*3+vertex]].y+
+					transform[2][1]*vertex_buffer[tris_buffer[tris*3+vertex]].z+
 					transform[3][1];
 
-			vertex[j].z = transform[0][2]*tris_buffer[i*3+j].x+
-					transform[1][2]*tris_buffer[i*3+j].y+
-					transform[2][2]*tris_buffer[i*3+j].z+
+			vertex_arr[vertex].z = transform[0][2]*vertex_buffer[tris_buffer[tris*3+vertex]].x+
+					transform[1][2]*vertex_buffer[tris_buffer[tris*3+vertex]].y+
+					transform[2][2]*vertex_buffer[tris_buffer[tris*3+vertex]].z+
 					transform[3][2];
 
-			/* Raster vertex to screen */
-			x_array[j] = (vertex[j].x / -absolute(vertex[j].z) * buffer_width) + buffer_width/2;
-			y_array[j] = (vertex[j].y / -absolute(vertex[j].z) * buffer_height)*screen_rateo + buffer_height/2;
+			/* Count vertex behind near plane */
+			if (vertex_arr[vertex].z < NEAR_PLANE)
+				behind_near++;
 		}
 
-		/* Get boundaries */
-		for (j = 0; j < 3; j++)
+		/* Near plane clipping nad culling */
+		if (behind_near > 0)
 		{
-			if (x_array[j] < min_x)
-				min_x = (int) x_array[j];
-			if (x_array[j] > max_x)
-				max_x = (int) x_array[j];
-			if (y_array[j] < min_y)
-				min_y = (int) y_array[j];
-			if (y_array[j] > max_y)
-				max_y = (int) y_array[j];
+			/* If all vertex are behind */
+			if (behind_near == 3)
+			{
+				/* Skip the tris */
+				continue;
+			}
+
+			/* If we have 1 or 2 vertex behind */
+			else
+			{
+				/* Find the 2 point of intersection with the near plane */
+				vertex_t intersect[2];
+				int id[3];
+
+				/* Set id[0] as id of the one on the different side */
+				if ((vertex_arr[0].z >= NEAR_PLANE && behind_near == 2) ||
+					(vertex_arr[0].z < NEAR_PLANE && behind_near == 1))
+				{
+					id[0] = 0;
+					id[1] = 1;
+					id[2] = 2;
+				}
+				else if ((vertex_arr[1].z >= NEAR_PLANE && behind_near == 2) ||
+					(vertex_arr[1].z < NEAR_PLANE && behind_near == 1))
+				{
+					id[0] = 1;
+					id[1] = 0;
+					id[2] = 2;
+				}
+				else
+				{
+					id[0] = 2;
+					id[1] = 0;
+					id[2] = 1;
+				}
+
+				/* Calculate the intersection point, check alignment first */
+				intersect[0].x = (vertex_arr[id[0]].x == vertex_arr[id[1]].x) ? vertex_arr[id[0]].x :
+						vertex_arr[id[0]].x + (NEAR_PLANE-vertex_arr[id[0]].z)*
+						(vertex_arr[id[0]].x-vertex_arr[id[1]].x)/(vertex_arr[id[0]].z-vertex_arr[id[1]].z);
+
+				intersect[0].y = (vertex_arr[id[0]].y == vertex_arr[id[1]].y) ? vertex_arr[id[0]].y :
+						vertex_arr[id[0]].y + (NEAR_PLANE-vertex_arr[id[0]].z)*
+						(vertex_arr[id[0]].y-vertex_arr[id[1]].y)/(vertex_arr[id[0]].z-vertex_arr[id[1]].z);
+				
+				intersect[1].x = (vertex_arr[id[0]].x == vertex_arr[id[2]].x) ? vertex_arr[id[0]].x :
+						vertex_arr[id[0]].x + (NEAR_PLANE-vertex_arr[id[0]].z)*
+						(vertex_arr[id[0]].x-vertex_arr[id[2]].x)/(vertex_arr[id[0]].z-vertex_arr[id[2]].z);
+
+				intersect[1].y = (vertex_arr[id[0]].y == vertex_arr[id[2]].y) ? vertex_arr[id[0]].y :
+						vertex_arr[id[0]].y + (NEAR_PLANE-vertex_arr[id[0]].z)*
+						(vertex_arr[id[0]].y-vertex_arr[id[2]].y)/(vertex_arr[id[0]].z-vertex_arr[id[2]].z);
+				
+				/* Create new tris */
+				if (behind_near == 2)
+				{
+					/* The vertex in front is kept, the other 2 become the intersect */
+					vertex_arr[0].x = vertex_arr[id[0]].x;
+					vertex_arr[0].y = vertex_arr[id[0]].y;
+					vertex_arr[0].z = vertex_arr[id[0]].z;
+
+					vertex_arr[1].x = intersect[0].x;
+					vertex_arr[1].y = intersect[0].y;
+					vertex_arr[1].z = NEAR_PLANE;
+
+					vertex_arr[2].x = intersect[1].x;
+					vertex_arr[2].y = intersect[1].y;
+					vertex_arr[2].z = NEAR_PLANE;
+				}
+				else
+				{
+					/* If we have 2 vertex in front we need to create 2 tris */
+					last_half_rendered = !last_half_rendered;
+
+					/* Check with tris we rendered last time */
+					if (last_half_rendered)
+					{
+						/* Create the first tris */
+						vertex_t tmp;
+
+						tmp.x = vertex_arr[id[1]].x;
+						tmp.y = vertex_arr[id[1]].y;
+						tmp.z = vertex_arr[id[1]].z;
+
+						vertex_arr[2].x = vertex_arr[id[2]].x;
+						vertex_arr[2].y = vertex_arr[id[2]].y;
+						vertex_arr[2].z = vertex_arr[id[2]].z;
+	
+						vertex_arr[1].x = tmp.x;
+						vertex_arr[1].y = tmp.y;
+						vertex_arr[1].z = tmp.z;
+
+						vertex_arr[0].x = intersect[0].x;
+						vertex_arr[0].y = intersect[0].y;
+						vertex_arr[0].z = NEAR_PLANE;
+
+						/* Decrease tris, so we get the same tris next cycle */
+						tris--;
+					}
+					else
+					{	
+						/* Create the second tris */
+						vertex_arr[2].x = vertex_arr[id[2]].x;
+						vertex_arr[2].y = vertex_arr[id[2]].y;
+						vertex_arr[2].z = vertex_arr[id[2]].z;
+				
+						vertex_arr[0].x = intersect[1].x;
+						vertex_arr[0].y = intersect[1].y;
+						vertex_arr[0].z = NEAR_PLANE;
+
+						vertex_arr[1].x = intersect[0].x;
+						vertex_arr[1].y = intersect[0].y;
+						vertex_arr[1].z = NEAR_PLANE;
+					}
+				}
+			}
 		}
+
+		/* Compute face normal as cross product */
+		edge0.x = vertex_arr[0].x-vertex_arr[2].x;
+		edge0.y = vertex_arr[0].y-vertex_arr[2].y;
+		edge0.z = vertex_arr[0].z-vertex_arr[2].z;
+		edge1.x = vertex_arr[1].x-vertex_arr[2].x;
+		edge1.y = vertex_arr[1].y-vertex_arr[2].y;
+		edge1.z = vertex_arr[1].z-vertex_arr[2].z;
+
+		normal.x = edge0.y*edge1.z - edge0.z*edge1.y;
+		normal.y = edge0.z*edge1.x - edge0.x*edge1.z;
+		normal.z = edge0.x*edge1.y - edge0.y*edge1.x;
+	
+		/* Compute light factor */
+		light = normal.x*-LIGHT_POS_X+normal.y*LIGHT_POS_Y+normal.z*LIGHT_POS_Z;
 		
+		/* Flip normal if its a backward */
+		if (normal.z > 0) 
+			light *= -1;
+		
+		/* Raster vertex to screen */
+		for (vertex = 0; vertex < 3; vertex++)
+		{
+			vertex_arr[vertex].x = (vertex_arr[vertex].x / -vertex_arr[vertex].z * buffer_width) + buffer_width/2;
+			vertex_arr[vertex].y = (vertex_arr[vertex].y / -vertex_arr[vertex].z * buffer_height)*screen_rateo + buffer_height/2;
+
+			/* Get boundaries */
+			if (vertex_arr[vertex].x < min_x)
+				min_x = (int) vertex_arr[vertex].x;
+			if (vertex_arr[vertex].x > max_x)
+				max_x = (int) vertex_arr[vertex].x;
+			if (vertex_arr[vertex].y < min_y)
+				min_y = (int) vertex_arr[vertex].y;
+			if (vertex_arr[vertex].y > max_y)
+				max_y = (int) vertex_arr[vertex].y;
+		}
+
 		/* Check boundaries */
 		max_x = (max_x > buffer_width-1) ? buffer_width-1 : max_x;
 		max_y = (max_y > buffer_height-1) ? buffer_height-1 : max_y;
@@ -548,8 +691,8 @@ void render_to_buffer()
 		min_y = (min_y < 0) ? 0 : min_y;
 		
 		/* Calculate the determinant for barycentric coordinate */
-		determinant = 1/((y_array[1]-y_array[2])*(x_array[0]-x_array[2]) +
-					(x_array[2]-x_array[1])*(y_array[0]-y_array[2]));
+		determinant = 1/((vertex_arr[1].y-vertex_arr[2].y)*(vertex_arr[0].x-vertex_arr[2].x) +
+					(vertex_arr[2].x-vertex_arr[1].x)*(vertex_arr[0].y-vertex_arr[2].y));
 
 		/* Test only the pixel in this area */
 		for (y = min_y; y <= max_y; y++) 
@@ -557,26 +700,30 @@ void render_to_buffer()
 			for (x = min_x; x <= max_x; x++) 
 			{
 				/* Calculate barycentric coordinate */
-				float lambda0 = ((y_array[1]-y_array[2])*(x-x_array[2]) +
-					(x_array[2]-x_array[1])*(y-y_array[2]))*determinant;
-				float lambda1 = ((y_array[2]-y_array[0])*(x-x_array[2]) +
-					(x_array[0]-x_array[2])*(y-y_array[2]))*determinant;
-				float lambda2 = 1 - lambda0 - lambda1;
+				float lambda0 = ((vertex_arr[1].y-vertex_arr[2].y)*(x-vertex_arr[2].x) +
+					(vertex_arr[2].x-vertex_arr[1].x)*(y-vertex_arr[2].y))*determinant;
+				float lambda1 = ((vertex_arr[2].y-vertex_arr[0].y)*(x-vertex_arr[2].x) +
+					(vertex_arr[0].x-vertex_arr[2].x)*(y-vertex_arr[2].y))*determinant;
+				float lambda2 = 1.0f - lambda0 - lambda1;
 				
 				/* If is inside the triangle, render it */
 				if (lambda0 >= 0 && lambda1 >= 0 && lambda2 >= 0) 
 				{
 					/* Interpolate Z value */
-					float pixel_depth = vertex[0].z * lambda0 +
-								vertex[1].z * lambda1 +
-								vertex[2].z * lambda2;
+					float pixel_depth;
+			
+					/* Perspective correct interpolation */
+					pixel_depth = lambda0 / vertex_arr[0].z +
+							lambda1 / vertex_arr[1].z +
+							lambda2 / vertex_arr[2].z;
 
-					/* Test depth buffer and near plane */
-					if (depth[x+y*buffer_width] > pixel_depth && pixel_depth > NEAR_PLANE)
+
+					/* Test depth buffer */
+					if (depth_buffer[x+y*buffer_width] < pixel_depth)
 					{
-						/* Update both buffer */
-						screen[x+y*buffer_width] = tris_buffer[i*3].color;
-						depth[x+y*buffer_width] = pixel_depth;
+						/* Update both buffer */	
+						depth_buffer[x+y*buffer_width] = pixel_depth;
+						screen_buffer[x+y*buffer_width] = light < 0 ? SHADOW_CHAR : LIGHT_CHAR;
 					}
 				}
 			}			
@@ -587,9 +734,9 @@ void render_to_buffer()
 }
 
 /* Draw in the console */
-void draw()
+void draw_screen()
 {
-	int i, j;
+	int col, row;
 
 	/* Render to buffer */
 	render_to_buffer();
@@ -597,14 +744,13 @@ void draw()
 	/* Clear the console */
 	clear();
 
-	/* Print it */
-	for (j = 0; j < buffer_height; j++) 
-	{
-		for (i = 0; i < buffer_width; i++)
+	/* Print its */
+	for (row = 0; row < buffer_height; row++)
+	{	
+		for (col = 0; col < buffer_width; col++)
 		{
-			/* Set color attribute and print a blank space */
-			attron(COLOR_PAIR(screen[i+j*buffer_width]));
-			addch(' ');
+			/* Print the char in the buffer */
+			addch(screen_buffer[col+row*buffer_width]);
 		}
 	}
 
@@ -614,17 +760,21 @@ void draw()
 /* Create depth and screen buffer */
 void create_buffer(int width, int height)
 {
+	/* Check width and height to be more than zero */
+	if (width <= 0 || height <= 0)
+		return;
+
 	/* Free old buffer */
-	free(screen);
-	free(depth);
+	free(screen_buffer);
+	free(depth_buffer);
 
 	/* Allocate new one */
-	screen = (int*) malloc(sizeof(int) * (unsigned int)width * (unsigned int)height);
-	depth = (float*) malloc(sizeof(float) * (unsigned int)width * (unsigned int)height);
+	screen_buffer = (char*) malloc(sizeof(char) * width * height);
+	depth_buffer = (float*) malloc(sizeof(float) * width * height);
 
 	/* Set global buffer size */
-	buffer_width = (int) width;
-	buffer_height = (int) height;
+	buffer_width = width;
+	buffer_height = height;
 
 	/* Update screen rateo */
 	screen_rateo = (float)buffer_width/buffer_height*FONT_RATEO;
@@ -632,41 +782,32 @@ void create_buffer(int width, int height)
 	return;
 }
 
-/* Clean and exit */
-void exit_game()
+/* Ncurses input loop */
+void loop_input()
 {
-	/* Free memory */
-	free(tris_buffer);
-	free(screen);
-	free(depth);
-	
-	/* Kill the windows */
-	endwin();
-
-	return;
-}
-
-/* Main loop */
-void loop_game()
-{
+	/* Input variables */
+	int command;
 	int quit = 0;
 
-	while(!quit)
+	while (!quit)
 	{
-		/* Check window resize */
-		if (getmaxx(stdscr) != buffer_width || getmaxy(stdscr) != buffer_height)
+		/* Check screen to be the same size as before */
+		if (buffer_width != getmaxx(stdscr) || buffer_height != getmaxy(stdscr))
+		{
 			create_buffer(getmaxx(stdscr), getmaxy(stdscr));
-		
-		/* Render */
-		draw();
+		}
 
-		/* Process input */
-		switch(getch())
+		/* Render */
+		draw_screen();
+
+		/* Get input */
+		command = getch();
+	
+		switch (command)
 		{
 			/* Quit */
 			case ('\n'):
 				quit = 1;
-				exit_game();
 				break;
 
 			/* Camera rotation */
@@ -694,7 +835,6 @@ void loop_game()
 				rotate_z(CAM_ROT);
 				break;
 
-				
 			/* Camera movement */
 			case('w'):
 				move_camera(0, 0, -CAM_MOT);
@@ -720,47 +860,41 @@ void loop_game()
 				move_camera(0, -CAM_MOT, 0);
 				break;
 		}
-
 	}
 
 	return;
 }
 
-/* Init game */
-void init_game()
+/* Main */
+int main(int argc, char *argv[]) 
 {
-	short i;
-	
+	/* Parse the model */
+	parse_obj("church.obj");
+
 	/* Ncurses init */
 	initscr();
 	cbreak();
 	noecho();
 	curs_set(0);
 
-	/* Bind color pair */
-	start_color();
-	for (i = 0; i < 8; i++)
-	{
-		/* Color from 0 to  7*/
-		init_pair(i+1, COLOR_WHITE, i);
-	}
+	/* Restore the mesh */
+	restore_mesh();
 
-	/* Rendering init */
+	/* Allocate rendering buffer */
 	create_buffer(getmaxx(stdscr), getmaxy(stdscr));
 
-	/* World init */
-	load_world();
-	restore_position();
+	/* Start the input loop */
+	loop_input();
 
-	/* Start the game loop */
-	loop_game();
+	/* Free memory */
+	free(tris_buffer);
+	free(vertex_buffer);
+	free(screen_buffer);
+	free(depth_buffer);
+	
+	/* Kill the windows */
+	endwin();
 
-	return;
-}
-
-/* Main */
-int main()
-{
-	init_game();
+	/* Exit */
 	return 0;
 }
