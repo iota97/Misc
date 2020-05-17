@@ -1,0 +1,159 @@
+CWCheat Syntax (https://raing3.gshi.org/psp-utilities/page/PSP/CodeTypes)
+
+Constant RAM Write
+
+	0XXXXXXX YYYYYYYY	Writes byte YY to [XXXXXXX].
+	
+	1XXXXXXX 0000YYYY	Writes halfword YYYY to [XXXXXXX].
+	
+	2XXXXXXX 000000YY	Writes word YYYYYYYY to [XXXXXXX].
+
+
+Increment and Decrement Code Types
+
+	301000YY XXXXXXXX 	Adds YY to the byte stored at [XXXXXXXX].
+	
+	3030YYYY XXXXXXXX 	Adds YYYY to the halfword stored at [XXXXXXXX].
+	
+	30500000 XXXXXXXX	Adds YYYYYYYY to the word stored at [XXXXXXXX].
+	YYYYYYYY 000000000 	
+
+	302000YY XXXXXXXX 	Subtracts YY from the byte stored at [XXXXXXXX].
+
+	3040YYYY XXXXXXXX 	Subtracts YYYY from the halfword stored at [XXXXXXXX].
+
+	30600000 XXXXXXXX	Subtracts YYYYYYYY from the word stored at [XXXXXXXX].
+	YYYYYYYY 000000000 	
+
+	
+Conditional Code Types
+
+	DXXXXXXX 200000YY 	Checks if YY == (byte at [XXXXXXX]).
+				If not, the following line is not executed (ie. execution status is set to false for 1 line).
+
+	DXXXXXXX 201000YY 	Checks if YY != (byte at [XXXXXXX]).
+				If not, the following line is not executed (ie. execution status is set to false for 1 line).
+
+	DXXXXXXX 202000YY 	Checks if YY < (byte at [XXXXXXX]).
+				If not, the following line is not executed (ie. execution status is set to false for 1 line).
+
+	DXXXXXXX 203000YY 	Checks if YY > (byte at [XXXXXXX]).
+				If not, the following line is not executed (ie. execution status is set to false for 1 line).
+
+	DXXXXXXX 0000YYYY 	Checks if YYYY == (halfword at [XXXXXXX]).
+				If not, the following line is not executed (ie. execution status is set to false for 1 line).
+
+	DXXXXXXX 0010YYYY 	Checks if YYYY != (halfword at [XXXXXXX]).
+				If not, the following line is not executed (ie. execution status is set to false for 1 line).
+
+	DXXXXXXX 0020YYYY 	Checks if YYYY < (halfword at [XXXXXXX]).
+				If not, the following line is not executed (ie. execution status is set to false for 1 line).
+
+	DXXXXXXX 0030YYYY 	Checks if YYYY > (halfword at [XXXXXXX]).
+				If not, the following line is not executed (ie. execution status is set to false for 1 line).
+
+		
+Multiple Skip Conditional Code Types
+
+	E1ZZYYYY 0XXXXXXX 	Checks if YY == (byte at [XXXXXXX]).
+				If not, the next ZZ are not executed (ie. execution status is set to false for ZZ lines).
+
+	E1ZZYYYY 1XXXXXXX 	Checks if YY != (byte at [XXXXXXX]).
+				If not, the next ZZ are not executed (ie. execution status is set to false for ZZ lines).
+
+	E1ZZYYYY 2XXXXXXX 	Checks if YY < (byte at [XXXXXXX]).
+				If not, the next ZZ are not executed (ie. execution status is set to false for ZZ lines).
+
+	E1ZZYYYY 3XXXXXXX 	Checks if YY > (byte at [XXXXXXX]).
+				If not, the next ZZ are not executed (ie. execution status is set to false for ZZ lines).
+
+	EZZZYYYY 0XXXXXXX 	Checks if YYYY == (halfword at [XXXXXXX]).
+				If not, the next ZZZ are not executed (ie. execution status is set to false for ZZZ lines).
+
+	EZZZYYYY 1XXXXXXX 	Checks if YYYY != (halfword at [XXXXXXX]).
+				If not, the next ZZZ are not executed (ie. execution status is set to false for ZZZ lines).
+
+	EZZZYYYY 2XXXXXXX 	Checks if YYYY < (halfword at [XXXXXXX]).
+				If not, the next ZZZ are not executed (ie. execution status is set to false for ZZZ lines).
+
+	EZZZYYYY 3XXXXXXX 	Checks if YYYY > (halfword at [XXXXXXX]).
+				If not, the next ZZZ are not executed (ie. execution status is set to false for ZZZ lines).
+		
+
+Address Conditional Code Types
+
+	DXXXXXXX 4YYYYYYY	Checks if value at [XXXXXXX] == value at [YYYYYYY].
+	ZZZZZZZZ 0000000W 	If not, the next ZZZZZZZZ lines are not executed (ie. execution status is set to false for ZZZ lines).	
+				W = Address type; 0 - 8-bit, 1 - 16-bit, 2 - 32-bit
+
+	DXXXXXXX 5YYYYYYY	Checks if value at [XXXXXXX] != value at [YYYYYYY].
+	ZZZZZZZZ 0000000W 	If not, the next ZZZZZZZZ lines are not executed (ie. execution status is set to false for ZZZ lines).
+				W = Address type; 0 - 8-bit, 1 - 16-bit, 2 - 32-bit
+
+	DXXXXXXX 6YYYYYYY	Checks if value at [XXXXXXX] < value at [YYYYYYY].
+	ZZZZZZZZ 0000000W 	If not, the next ZZZZZZZZ lines are not executed (ie. execution status is set to false for ZZZ lines).	
+				W = Address type; 0 - 8-bit, 1 - 16-bit, 2 - 32-bit
+
+	DXXXXXXX 7YYYYYYY	Checks if value at [XXXXXXX] > value at [YYYYYYY].
+	ZZZZZZZZ 0000000W 	If not, the next ZZZZZZZZ lines are not executed (ie. execution status is set to false for ZZZ lines).
+				W = Address type; 0 - 8-bit, 1 - 16-bit, 2 - 32-bit
+		
+				
+Boolean Code Types				
+
+	7XXXXXXX 000000YY 	Writes byte (byte at [XXXXXXX] OR YY) to [XXXXXXX].
+
+	7XXXXXXX 000200YY 	Writes byte (byte at [XXXXXXX] AND YY) to [XXXXXXX].
+
+	7XXXXXXX 000400YY 	Writes byte (byte at [XXXXXXX] XOR YY) to [XXXXXXX].
+
+	7XXXXXXX 000100YY 	Writes halfword (halfword at [XXXXXXX] OR YYYY) to [XXXXXXX].
+
+	7XXXXXXX 000300YY 	Writes halfword (halfword at [XXXXXXX] AND YYYY) to [XXXXXXX].
+
+	7XXXXXXX 000500YY 	Writes halfword (halfword at [XXXXXXX] XOR YYYY) to [XXXXXXX].
+	
+
+Pointer Code Types
+
+	TODO...
+
+
+Miscellaneous Code Types
+
+	D00000YY 1XXXXXXX 	Checks if (ctrl & XXXXXXX) == XXXXXXX.
+				If not, the next YY+1 lines are not executed (ie. execution status is set to false for YY+1 lines).
+
+	D00000YY 3XXXXXXX 	Checks if (ctrl & XXXXXXX) != XXXXXXX.
+				If not, the next YY+1 lines are not executed (ie. execution status is set to false for YY+1 lines).
+
+	5XXXXXXX ZZZZZZZZ	Copies ZZZZZZZZ bytes from [XXXXXXX] to [YYYYYYY].
+	0YYYYYYY 0000000 	
+
+	4XXXXXXX YYYYZZZZ	Starting at address [XXXXXXX], this code will loop YYYY times.
+	VVVVVVVV WWWWWWWW 	The next address is determined by the incrementing the current address by (ZZZZ * 4).
+				The value written to the address is specified by VVVVVVVV+(WWWWWWWW * loop count).
+
+	B0000000 XXXXXXXX 	Delays the code engine for XXXXXXXX cycles. Will delay the application of all following code lines. (PPSSPP is missing support)
+
+	CXXXXXXX YYYYYYYY 	Checks if YYYYYYYY == (word at [XXXXXXX]).
+				If not, the remainder of the code is not executed (ie. execution status is set to false until the next cheat is reached).
+				
+		
+PPSSPP Code Types
+
+	A0XXYYYY 00ZZWWWW	Xinput pad vibrate left for XX with YYYY power, right for ZZ with WWWW power.
+	
+	A1000000 XXXXXXXX	Xinput pad vibrate using data from [XXXXXXXX].
+				+0x0 = left vibration(u16), +0x4 = left vibration time(u8).
+				+0x2 = right vibration(u16), +0x6 = right vibration time(u8).
+				
+	A2XX00YY ZZZZZZZZ	Set u_setting YY in postprocessing shader XX of the chain to ZZZZZZZZ(float).
+	
+	A3XX00YY ZZZZZZZZ	Set u_setting YY in postprocessing shader XX of the chain using [ZZZZZZZZ] as byte.
+	
+	A3XX01YY ZZZZZZZZ	Set u_setting YY in postprocessing shader XX of the chain using [ZZZZZZZZ] as halfword.
+	
+	A3XX02YY ZZZZZZZZ	Set u_setting YY in postprocessing shader XX of the chain using [ZZZZZZZZ] as word.
+	
+	A3XX03YY ZZZZZZZZ	Set u_setting YY in postprocessing shader XX of the chain using [ZZZZZZZZ] as float.
