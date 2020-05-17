@@ -140,7 +140,7 @@ Miscellaneous Code Types
 				If not, the remainder of the code is not executed (ie. execution status is set to false until the next cheat is reached).
 				
 		
-PPSSPP Code Types
+PPSSPP Code Types (Note PPSSPP map all memory while CWCheat one start from user segment so need to add/subtract the offset 0x08800000)
 
 	A0XXYYYY 00ZZWWWW	Xinput pad vibrate left for XX with YYYY power, right for ZZ with WWWW power.
 	
