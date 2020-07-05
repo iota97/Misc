@@ -5,7 +5,7 @@ struct vertex {
 };
 struct tris {
 	vertex a, b, c;
-	char color;
+	char l, s;
 };
 
 class GPU {
@@ -89,6 +89,32 @@ public:
 		C[3][3] = A[3][0]*B[0][3] + A[3][1]*B[1][3] + A[3][2]*B[2][3] + A[3][3]*B[3][3];
 	}
 	
+	void doFragment(vertex vtx[3], char light, char shadow) {
+		int x_min = (vtx[0].x < vtx[1].x ? (vtx[0].x < vtx[2].x ? vtx[0].x : vtx[2].x) : (vtx[1].x < vtx[2].x ? vtx[1].x : vtx[2].x))*w_;
+		int x_max = (vtx[0].x > vtx[1].x ? (vtx[0].x > vtx[2].x ? vtx[0].x : vtx[2].x) : (vtx[1].x > vtx[2].x ? vtx[1].x : vtx[2].x))*w_;
+		int y_min = (vtx[0].y < vtx[1].y ? (vtx[0].y < vtx[2].y ? vtx[0].y : vtx[2].y) : (vtx[1].y < vtx[2].y ? vtx[1].y : vtx[2].y))*h_;
+		int y_max = (vtx[0].y > vtx[1].y ? (vtx[0].y > vtx[2].y ? vtx[0].y : vtx[2].y) : (vtx[1].y > vtx[2].y ? vtx[1].y : vtx[2].y))*h_;
+		if (x_min < 0) x_min = 0;
+		if (x_max > w_) x_max = w_;
+		if (y_min < 0) y_min = 0;
+		if (y_max > h_) y_max = h_;
+		float det = 1.0f/((vtx[1].y-vtx[2].y)*(vtx[0].x-vtx[2].x) + (vtx[2].x-vtx[1].x)*(vtx[0].y-vtx[2].y));
+		for (int y = y_min; y < y_max; ++y) {
+			for (int x = x_min; x < x_max; ++x) {
+				float l0 = ((vtx[1].y-vtx[2].y)*((float)x/w_-vtx[2].x)+(vtx[2].x-vtx[1].x)*((float)y/h_-vtx[2].y))*det;
+				float l1 = ((vtx[2].y-vtx[0].y)*((float)x/w_-vtx[2].x)+(vtx[0].x-vtx[2].x)*((float)y/h_-vtx[2].y))*det;
+				float l2 = 1.0f - l0 - l1;
+				if (l0 >= 0 && l1 >= 0 && l2 >= 0) {
+					float depth = vtx[0].z*l0 + vtx[1].z*l1 + vtx[2].z*l2; 
+					if (depth <= depth_buffer_[x][y]) {
+						depth_buffer_[x][y] = depth;
+						color_buffer_[x][y] = light;
+					}
+				}
+			}
+		}
+	}
+	
 	void renderTris(tris *t, int n) {
 		float MV[4][4];
 		float MVP[4][4];
@@ -118,37 +144,86 @@ public:
 			vtx[2].y = (t[i].c.x * MVP[1][0] + t[i].c.y * MVP[1][1] + t[i].c.z * MVP[1][2] + t[i].c.w * MVP[1][3])/vtx[2].w;
 			vtx[2].z = (t[i].c.x * MVP[2][0] + t[i].c.y * MVP[2][1] + t[i].c.z * MVP[2][2] + t[i].c.w * MVP[2][3])/vtx[2].w;
 			vtx[2].w = 1.0f;
-			if (vtx[2].z < 0.0f) nearClip++;
-			
-			if (nearClip == 3)
-				continue;
-			
-			// TODO: nearClipping
-			
-			int x_min = (vtx[0].x < vtx[1].x ? (vtx[0].x < vtx[2].x ? vtx[0].x : vtx[2].x) : (vtx[1].x < vtx[2].x ? vtx[1].x : vtx[2].x))*w_;
-			int x_max = (vtx[0].x > vtx[1].x ? (vtx[0].x > vtx[2].x ? vtx[0].x : vtx[2].x) : (vtx[1].x > vtx[2].x ? vtx[1].x : vtx[2].x))*w_;
-			int y_min = (vtx[0].y < vtx[1].y ? (vtx[0].y < vtx[2].y ? vtx[0].y : vtx[2].y) : (vtx[1].y < vtx[2].y ? vtx[1].y : vtx[2].y))*h_;
-			int y_max = (vtx[0].y > vtx[1].y ? (vtx[0].y > vtx[2].y ? vtx[0].y : vtx[2].y) : (vtx[1].y > vtx[2].y ? vtx[1].y : vtx[2].y))*h_;
-			if (x_min < 0) x_min = 0;
-			if (x_max > w_) x_max = w_;
-			if (y_min < 0) y_min = 0;
-			if (y_max > h_) y_max = h_;
+			if (vtx[2].z < 0.02f) nearClip++;
+
+			if (nearClip > 0) {
+				if (nearClip == 3) {
+					continue;
+				} else {
+					vertex intersect[2];
+					int id[3];
+
+					if ((vtx[0].z >= 0.02f && nearClip == 2) || (vtx[0].z < 0.02f && nearClip == 1)) {
+						id[0] = 0;
+						id[1] = 1;
+						id[2] = 2;
+					}
+					else if ((vtx[1].z >= 0.02f && nearClip == 2) || (vtx[1].z < 0.02f && nearClip == 1)) {
+						id[0] = 1;
+						id[1] = 0;
+						id[2] = 2;
+					} else {
+						id[0] = 2;
+						id[1] = 0;
+						id[2] = 1;
+					}
+
+					intersect[0].x = (vtx[id[0]].x == vtx[id[1]].x) ? vtx[id[0]].x :
+							vtx[id[0]].x + (0.02f-vtx[id[0]].z)*(vtx[id[0]].x-vtx[id[1]].x)/(vtx[id[0]].z-vtx[id[1]].z);
+
+					intersect[0].y = (vtx[id[0]].y == vtx[id[1]].y) ? vtx[id[0]].y :
+							vtx[id[0]].y + (0.02f-vtx[id[0]].z)*(vtx[id[0]].y-vtx[id[1]].y)/(vtx[id[0]].z-vtx[id[1]].z);
+					
+					intersect[1].x = (vtx[id[0]].x == vtx[id[2]].x) ? vtx[id[0]].x :
+							vtx[id[0]].x + (0.02f-vtx[id[0]].z)*(vtx[id[0]].x-vtx[id[2]].x)/(vtx[id[0]].z-vtx[id[2]].z);
+
+					intersect[1].y = (vtx[id[0]].y == vtx[id[2]].y) ? vtx[id[0]].y :
+							vtx[id[0]].y + (0.02f-vtx[id[0]].z)*(vtx[id[0]].y-vtx[id[2]].y)/(vtx[id[0]].z-vtx[id[2]].z);
+
+					if (nearClip == 2) {
+						vtx[0].x = vtx[id[0]].x;
+						vtx[0].y = vtx[id[0]].y;
+						vtx[0].z = vtx[id[0]].z;
+
+						vtx[1].x = intersect[0].x;
+						vtx[1].y = intersect[0].y;
+						vtx[1].z = 0.02f;
+
+						vtx[2].x = intersect[1].x;
+						vtx[2].y = intersect[1].y;
+						vtx[2].z = 0.02f;
+					} else {
+						vertex tmp;
+						tmp.x = vtx[id[1]].x;
+						tmp.y = vtx[id[1]].y;
+						tmp.z = vtx[id[1]].z;
+
+						vtx[2].x = vtx[id[2]].x;
+						vtx[2].y = vtx[id[2]].y;
+						vtx[2].z = vtx[id[2]].z;
 		
-			float det = 1.0f/((vtx[1].y-vtx[2].y)*(vtx[0].x-vtx[2].x) + (vtx[2].x-vtx[1].x)*(vtx[0].y-vtx[2].y));
-			for (int y = y_min; y < y_max; ++y) {
-				for (int x = x_min; x < x_max; ++x) {
-					float l0 = ((vtx[1].y-vtx[2].y)*((float)x/w_-vtx[2].x)+(vtx[2].x-vtx[1].x)*((float)y/h_-vtx[2].y))*det;
-					float l1 = ((vtx[2].y-vtx[0].y)*((float)x/w_-vtx[2].x)+(vtx[0].x-vtx[2].x)*((float)y/h_-vtx[2].y))*det;
-					float l2 = 1.0f - l0 - l1;
-					if (l0 >= 0 && l1 >= 0 && l2 >= 0) {
-						float depth = vtx[0].z*l0 + vtx[1].z*l1 + vtx[2].z*l2; 
-						if (depth <= depth_buffer_[x][y]) {
-							depth_buffer_[x][y] = depth;
-							color_buffer_[x][y] = t[i].color;
-						}
+						vtx[1].x = tmp.x;
+						vtx[1].y = tmp.y;
+						vtx[1].z = tmp.z;
+
+						vtx[0].x = intersect[0].x;
+						vtx[0].y = intersect[0].y;
+						vtx[0].z = 0.02f;
+
+						doFragment(vtx, t[i].l, t[i].s);
+					
+						vtx[0].x = intersect[1].x;
+						vtx[0].y = intersect[1].y;
+						vtx[0].z = 0.02f;
+
+						vtx[1].x = intersect[0].x;
+						vtx[1].y = intersect[0].y;
+						vtx[1].z = 0.02f;
 					}
 				}
 			}
+
+			doFragment(vtx, t[i].l, t[i].s);
 		}
 	}
 	
@@ -196,29 +271,24 @@ int main (int argc, char *argv[]) {
 	
 	T[0].c.x = 0.5;
 	T[0].c.y = 1.0;
-	T[0].c.z = 1.0;
+	T[0].c.z = 0.5;
 	T[0].c.w = 1.0;
 	
-	T[0].color = 'A';
+	T[0].l = 'X';
 	
-	T[1].a.x = 0.5;
-	T[1].a.y = 0.0;
-	T[1].a.z = 0.1;
-	T[1].a.w = 1.0;
+	float M[4][4] = {{1, 0, 0, 0},
+			 {0, 1, 0, 0},
+			 {0, 0, 1, 0},
+			 {0, 0, 0, 1}};
 	
-	T[1].b.x = 0.3;
-	T[1].b.y = 1.0;
-	T[1].b.z = 0.1;
-	T[1].b.w = 1.0;
-	
-	T[1].c.x = 0.7;
-	T[1].c.y = 1.0;
-	T[1].c.z = 0.1;
-	T[1].c.w = 1.0;
-	
-	T[1].color = 'B';
-	
-	gpu.renderTris(T, 2);
-	gpu.flip();
+	for(;;) {
+		gpu.setModelMatrix(M);
+		M[2][3] -= 0.03;
+		gpu.clearColor();
+		gpu.clearDepth();
+		gpu.renderTris(T, 1);
+		gpu.flip();
+		getchar();
+	}
 	return 0;
 }
