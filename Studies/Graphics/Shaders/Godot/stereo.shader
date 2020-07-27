@@ -1,7 +1,7 @@
 // Place a MeshInstance (Quad) with this material in front of the camera
 
 shader_type spatial;
-render_mode unshaded;
+render_mode unshaded, depth_test_disable, depth_draw_never;
 
 // https://www.shadertoy.com/view/ldGfDG
 // https://www.shadertoy.com/view/4djSRW
