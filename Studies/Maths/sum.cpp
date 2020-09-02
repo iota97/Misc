@@ -72,18 +72,13 @@ int main(int argc, char *argv[]) {
 
 	int M = atoi(argv[1])+1;
 	X c[256];
-
 	for (int r = 0; r < M; r++) {
-   		for (int i = r; i >= 0; i--) {
+   		for (int i = r; i > 0; i--)
    			c[i] = c[i-1].integrate() * r;
-   		}
    		c[0] = X();
-   		for (int i = 1; i <= r; i++) {
+   		for (int i = 1; i <= r; i++)
    			c[0] -= c[i];
-   		}
-   		
    		if (r == M-1) {
-	   		printf("\nn^%d:  ", r);
 	   		for (int i = r; i >= 0; i--) {
 	   			if (!c[i].num()) continue;
 	   			if (r != i) {
@@ -94,17 +89,9 @@ int main(int argc, char *argv[]) {
 	   			if (c[i].esp()) printf("X");
 	   			if (c[i].esp() > 1) printf("^%d", c[i].esp());
 	   			if (c[i].den() != 1) printf("/%d", c[i].den());
-	   			printf("  ");
+	   			printf(" ");
 	   		}
-	   		
-	   		printf("\n\nTest value:\n\n");
-	   		for (int j = 0; j < 10; ++j) {
-	   			X v = 0;
-	   			for (int i = r; i >= 0; i--) {
-	   				v -= -pow(j, i+1)*c[i];
-	   			}
-	   			printf("%d -- %d: %s\n", v.num(), sum(j, r), (v.num() == sum(j, r)) ? "OK!" : "ERROR (overflow?)");
-	   		}
+	   		printf("\n");
 	   	}
    	}
 
