@@ -86,8 +86,11 @@ int main(int argc, char *argv[]) {
 	   		printf("\nn^%d:  ", r);
 	   		for (int i = r; i >= 0; i--) {
 	   			if (!c[i].num()) continue;
-	   			if (c[i].num() != 1 && c[i].num() != -1) printf("%d", c[i].num());
-	   			if (c[i].num() == -1) printf("-");
+	   			if (r != i) {
+		   			if (c[i].num() == -1) printf("-");
+		   			else if (c[i].num() == 1) printf("+");
+		   			else printf("%+d", c[i].num());
+		   		}
 	   			if (c[i].esp()) printf("X");
 	   			if (c[i].esp() > 1) printf("^%d", c[i].esp());
 	   			if (c[i].den() != 1) printf("/%d", c[i].den());
