@@ -1,6 +1,8 @@
 CXX=c++
 CXXFLAG=-Wall -O2
 
+dummy_build_folder := $(shell mkdir -p build)
+
 p2.out: src/main.cpp build/orario.o build/telefonata.o build/bolletta.o
 	$(CXX) $(CXFLAG) src/main.cpp build/orario.o build/telefonata.o build/bolletta.o -o p2.out
 
