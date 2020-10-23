@@ -105,3 +105,47 @@ bolletta Chiamate_A(bolletta& b, int num) {
 	b = resto; // Ripristino dopo
 	return selezionate;
 }
+
+bool bolletta::iteratore::operator==(const iteratore& i) const {
+	return punt == i.punt;
+}
+
+bool bolletta::iteratore::operator!=(const iteratore& i) const {
+	return punt != i.punt;
+}
+
+bolletta::iteratore& bolletta::iteratore::operator++() {
+	if (punt) punt = punt->next;
+	return *this;
+}
+
+bolletta::iteratore bolletta::iteratore::operator++(int) {
+	iteratore aux = *this;
+	if (punt) punt = punt->next;
+	return aux;
+}
+
+bolletta::iteratore bolletta::begin() const {
+	iteratore aux;
+	aux.punt = first;
+	return aux;
+}
+
+bolletta::iteratore bolletta::end() const {
+	iteratore aux;
+	aux.punt = nullptr;
+	return aux;
+}
+
+telefonata& bolletta::operator[](const iteratore& it) const {
+	return it.punt->info;
+}
+
+telefonata& bolletta::iteratore::operator*() const {
+	return punt->info;
+}
+
+telefonata* bolletta::iteratore::operator->() const {
+	return &(punt->info);
+}
+
