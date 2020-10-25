@@ -60,6 +60,10 @@ int& Vector::operator[](int offset) const {
 	return arr[offset];
 }
 
+int& Vector::operator[](const Iteratore& i) const {
+	return *i.p;
+}
+
 void Vector::append(const Vector& v) {
 	int* aux = new int[size+v.size];
 	for (int i = 0; i < size; i++) {
@@ -71,6 +75,39 @@ void Vector::append(const Vector& v) {
 	size += v.size;
 	delete arr;
 	arr = aux;
+}
+
+Vector::Iteratore& Vector::Iteratore::operator++() {
+	++p;
+	return *this;
+}
+
+bool Vector::Iteratore::operator==(const Iteratore& i) const {
+	return p == i.p;
+}
+
+bool Vector::Iteratore::operator!=(const Iteratore& i) const {
+	return p != i.p;
+}
+
+int& Vector::Iteratore::operator*() const {
+	return *p;
+}
+
+int* Vector::Iteratore::operator->() const {
+	return p;
+}
+
+Vector::Iteratore Vector::begin() const {
+	Iteratore aux;
+	aux.p = arr;
+	return aux;
+}
+
+Vector::Iteratore Vector::end() const {
+	Iteratore aux;
+	aux.p = arr+size;
+	return aux;
 }
 
 int main () {
@@ -91,6 +128,15 @@ int main () {
 	cout << "a==b: " << (a==b ? "true" : "false") << endl;
 	cout << "a==c: " << (a==c ? "true" : "false") << endl;
 	cout << "a+c: " << a+c << endl;
+	
+	for(auto& i : a)
+		i += 10;
+
+	cout << a << endl;
+	
+	Vector::Iteratore i = b.begin();
+	++i;
+	cout << b[i] << endl;
 
 	return 0;
 }
