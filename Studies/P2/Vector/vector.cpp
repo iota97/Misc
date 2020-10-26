@@ -4,13 +4,13 @@ using namespace std;
 
 Vector::Vector() : arr(0), size(0) {}
 
-Vector::~Vector() { delete arr; }
+Vector::~Vector() { delete[] arr; }
 
 Vector::Vector(const Vector& v) : arr(copia_arr(v.arr, v.size)), size(v.size) {}
 
 Vector& Vector::operator=(const Vector& v) { 
 	if (this != &v) {
-		delete arr;
+		delete[] arr;
 		arr = copia_arr(v.arr, v.size);
 		size = v.size;
 	}
@@ -24,7 +24,7 @@ void Vector::inserisci(int a) {
 	}
 	aux[size] = a;
 	size++;
-	delete arr;
+	delete[] arr;
 	arr = aux;
 }
 
@@ -73,7 +73,7 @@ void Vector::append(const Vector& v) {
 		aux[size+i] = v.arr[i];
 	}
 	size += v.size;
-	delete arr;
+	delete[] arr;
 	arr = aux;
 }
 
