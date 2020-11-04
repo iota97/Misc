@@ -16,7 +16,6 @@ private:
 		nodo* cx;
 		nodo* dx;
 		nodo(const T& x, nodo* s=0, nodo* c=0, nodo* d=0);
-		friend std::ostream& operator<< <T>(std::ostream&, const albero<T>&);
 	};
 	nodo* root;
 	
@@ -24,6 +23,7 @@ private:
 	static void distruggi(nodo* r);
 	static bool uguale(nodo* a, nodo* b);
 	static bool cerca(nodo* r, const T& a);
+	static std::ostream& stampa(std::ostream& o, nodo* a);
 
 public:
 	albero();
@@ -39,7 +39,20 @@ public:
 
 template <class T>
 std::ostream& operator<<(std::ostream& o, const albero<T>& a) {
-	return o << "TODO";
+	return albero<T>::stampa(o, a.root);
+}
+
+template <class T>
+std::ostream& albero<T>::stampa(std::ostream& o, nodo* a) {
+	if (!a) return o << "_";
+	o << "(" << a->info << ",";
+	stampa(o, a->sx);
+	o << ",";
+	stampa(o, a->cx);
+	o << ",";
+	stampa(o, a->dx);
+	o << ")";
+	return o;
 }
 
 template <class T>
