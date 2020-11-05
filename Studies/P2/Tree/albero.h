@@ -32,7 +32,7 @@ public:
 	~albero();
 	bool operator==(const albero& a) const;
 	void insert(const T& x);
-	bool search(const T& x);
+	bool search(const T& x) const;
 
 	friend std::ostream& operator<< <T>(std::ostream&, const albero<T>&);
 };
@@ -80,7 +80,7 @@ void albero<T>::insert(const T& x) {
 }
 
 template <class T>
-bool albero<T>::search(const T& x) {
+bool albero<T>::search(const T& x) const {
 	return cerca(root, x);
 }
 
