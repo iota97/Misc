@@ -44,8 +44,7 @@ std::vector<FileAudio*> IZod::braniQual() const {
 }
 void IZod::insert(Mp3* m) {
 	for (auto& it : vec) {
-		Mp3* p = dynamic_cast<Mp3*>(it.ptr);
-		if (p && *p == *m) return;
+		if (*m == *it.ptr) return;
 	}
 	vec.push_back(Brano(m));
 }

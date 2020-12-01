@@ -11,7 +11,7 @@ public:
 	virtual ~FileAudio() {}
 	virtual FileAudio* clone() const = 0;
 	virtual bool qualita() const = 0;
-	bool operator==(const FileAudio& f) const;
+	virtual bool operator==(const FileAudio& f) const;
 	int getSize() const;
 };
 #endif

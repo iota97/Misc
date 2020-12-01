@@ -7,10 +7,9 @@ private:
 	int bitRate;
 public:
 	Mp3(const std::string& t, int s, int r);
-	~Mp3() {}
 	Mp3* clone() const;
 	bool qualita() const;
-	bool operator==(const Mp3& m) const;
+	bool operator==(const FileAudio& f) const;
 	int getBitRate() const;
 };
 #endif

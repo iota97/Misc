@@ -14,6 +14,6 @@ bool Wav::isLossless() const {
 	return lossless;
 }
 
-bool Wav::operator==(const Wav& w) const {
-	return FileAudio::operator==(w) && freq == w.freq && lossless == w.lossless;
+bool Wav::operator==(const FileAudio& f) const {
+	return FileAudio::operator==(f) && freq == static_cast<const Wav&>(f).freq && lossless == static_cast<const Wav&>(f).lossless;
 }

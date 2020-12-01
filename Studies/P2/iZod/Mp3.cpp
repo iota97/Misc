@@ -10,8 +10,8 @@ bool Mp3::qualita() const {
 	return bitRate >= 192;
 }
 
-bool Mp3::operator==(const Mp3& m) const {
-	return FileAudio::operator==(m) && bitRate == m.bitRate;
+bool Mp3::operator==(const FileAudio& f) const {
+	return FileAudio::operator==(f) && bitRate == static_cast<const Mp3&>(f).bitRate;
 }
 
 int Mp3::getBitRate() const {
