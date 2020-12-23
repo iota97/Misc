@@ -118,7 +118,7 @@ typename dList<T>::const_iterator dList<T>::const_iterator::operator--(int) {
 }
 
 template<class T>
-dList<T>::nodo::nodo(const T& t, nodo *p /* default: 0 */, nodo *n /* default: 0 */) : info(t), prev(p), next(n) {}
+dList<T>::nodo::nodo(const T& t, nodo *p, nodo *n) : info(t), prev(p), next(n) {}
 
 template<class T>
 dList<T>::dList(unsigned int k, const T& t) {
@@ -138,7 +138,7 @@ template<class T>
 dList<T>::dList(const dList& l) : first(copia(l.first, last)) {}
 
 template<class T>
-typename dList<T>::nodo* dList<T>::copia(nodo* n, nodo* &l, nodo* p /* default: 0 */) {
+typename dList<T>::nodo* dList<T>::copia(nodo* n, nodo* &l, nodo* p) {
 	if (!n) {
 		l = p;
 		return 0;
