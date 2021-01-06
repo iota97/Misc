@@ -4,3 +4,7 @@ PS1="\e[01;32m[\e[37m\$?\e[32m]\u@\h\e[37m \w \e[32m> \e[37m\n"
 
 # Native cmake
 alias native-cmake='CFLAGS="-march=native" CXXFLAGS="-march=native" cmake'
+
+# xmacro aliases
+alias macro-record="xmacrorec2 > macro.rec"
+alias macro-loop="while [ true ]; do xmacroplay < macro.rec; done"
