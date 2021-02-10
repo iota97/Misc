@@ -1,4 +1,4 @@
-// MHFU status based effect
+// MHFU status based effect v2
 
 /*
 _C1 Status based shader
@@ -14,7 +14,7 @@ SettingDefaultValue3=1.0
 SettingMaxValue3=1.0
 SettingMinValue3=0.0
 SettingStep3=1.0
-SettingName4=Stamina Blur
+SettingName4=Stamina Shake
 SettingDefaultValue4=1.0
 SettingMaxValue4=1.0
 SettingMinValue4=0.0
@@ -34,44 +34,22 @@ varying vec2 v_texcoord0;
 
 void main()
 {
-  float blur_fac = 0.0;
-  if (u_setting.y < 150.0 && u_setting.w > 0.5)
-    blur_fac = (1.0-u_setting.y/150.0)*10.0*sin(u_time.x);
+  float shake_fac = 0.0;
+  if (u_setting.y < 200.0 && u_setting.w > 0.5)
+    shake_fac = (1.0-u_setting.y/150.0)*0.1;
   float sat_fac = 1.0;
   if (u_setting.z > 0.5)
     sat_fac = u_setting.x/100.0;
 
-  vec2 offset = u_pixelDelta*blur_fac;
-  
-  vec3 rgbSimple0 =  1.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2( 0.0,-2.0)).xyz;
-  vec3 rgbSimple1 =  3.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2(-1.0,-1.0)).xyz;
-  vec3 rgbSimple2 =  8.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2( 0.0,-1.0)).xyz;
-  vec3 rgbSimple3 =  3.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2( 1.0,-1.0)).xyz;
-  vec3 rgbSimple4 =  1.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2(-2.0, 0.0)).xyz;
-  vec3 rgbSimple5 =  8.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2(-1.0, 0.0)).xyz;
-  vec3 rgbSimple6 = 10.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2( 0.0, 0.0)).xyz;
-  vec3 rgbSimple7 =  8.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2( 1.0, 0.0)).xyz;
-  vec3 rgbSimple8 =  1.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2( 2.0, 0.0)).xyz;
-  vec3 rgbSimple9 =  3.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2(-1.0, 1.0)).xyz;
-  vec3 rgbSimple10=  8.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2( 0.0, 1.0)).xyz;
-  vec3 rgbSimple11=  3.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2( 1.0, 1.0)).xyz;
-  vec3 rgbSimple12=  1.0 * texture2D(sampler0, v_texcoord0.xy + offset * vec2( 0.0, 2.0)).xyz;
-  
-  vec3 rgb =  rgbSimple0 + 
-              rgbSimple1 +
-              rgbSimple2 +
-              rgbSimple3 +
-              rgbSimple4 +
-              rgbSimple5 +
-              rgbSimple6 +
-              rgbSimple7 +
-              rgbSimple8 +
-              rgbSimple9 +
-              rgbSimple10 +
-              rgbSimple11 +
-              rgbSimple12;
-  rgb = rgb / 58.0;
+  vec2 uv = v_texcoord0.xy;
+  float t = clamp(mod(u_time.x, 10.0), 0.0, 10.0)*0.1;
+  float shake_magnitude = shake_fac * sin(31.4159*t) * (t+0.5)*t*t*(t-1.0)*(t-1.0)*15.5;
+  uv.y += shake_magnitude;
+  float trans_magnitude = shake_fac * sin(31.4159*t) * -t*(t-1.);
+  uv -= trans_magnitude;
 
-  gl_FragColor.rgb = mix(vec3(dot(rgb, vec3(0.299, 0.587, 0.114))), rgb, sat_fac);
+  vec3 col = texture2D(sampler0, uv).rgb;
+
+  gl_FragColor.rgb = mix(vec3(dot(col, vec3(0.299, 0.587, 0.114))), col, sat_fac);
   gl_FragColor.a = 1.0;
 }
