@@ -8,3 +8,9 @@ alias native-cmake='CFLAGS="-march=native" CXXFLAGS="-march=native" cmake'
 # xmacro aliases
 alias macro-record="xmacrorec2 > macro.rec"
 alias macro-loop="while [ true ]; do xmacroplay < macro.rec; done"
+
+# gperftool
+perf-graph() {
+	LD_PRELOAD="/usr/lib/libprofiler.so" CPUPROFILE=/tmp/gperf.prof "$1" &&
+	pprof -pdf "$1" /tmp/gperf.prof > "$2";
+}
