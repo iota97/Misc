@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PPSSPP theme editor</title>
+    
+    <style>
+        h2 {
+            font-size: 1.1em;
+        }
+        input, label {
+            display: block;
+            margin: 1em;
+        }
+        fieldset {
+            min-width: 15em;
+        }
+        #theme {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        textarea {
+            width: 100%;
+        }
+    </style>
+    
+    <script>
+        let theme = {
+            ItemStyleFg: 0xFFFFFFFF,
+            ItemStyleBg: 0x55000000,
+            ItemFocusedStyleFg: 0xFFFFFFFF,
+            ItemFocusedStyleBg: 0xFFEDC24C,
+            ItemDownStyleFg: 0xFFFFFFFF,
+            ItemDownStyleBg: 0xFFBD9939,
+            ItemDisabledStyleFg: 0x80EEEEEE,
+            ItemDisabledStyleBg: 0x55E0D4AF,
+            ItemHighlightedStyleFg: 0xFFFFFFFF,
+            ItemHighlightedStyleBg: 0x55BDBB39,
+            ButtonStyleFg: 0xFFFFFFFF,
+            ButtonStyleBg: 0x55000000,
+            ButtonFocusedStyleFg: 0xFFFFFFFF,
+            ButtonFocusedStyleBg: 0xFFBD9939,
+            ButtonDownStyleFg: 0xFFFFFFFF,
+            ButtonDownStyleBg: 0xFFBD9939,
+            ButtonDisabledStyleFg: 0x80EEEEEE,
+            ButtonDisabledStyleBg: 0x55E0D4AF,
+            ButtonHighlightedStyleFg: 0xFFFFFFFF,
+            ButtonHighlightedStyleBg: 0x55BDBB39,
+            HeaderStyleFg: 0xFFFFFFFF,
+            InfoStyleFg: 0xFFFFFFFF,
+            InfoStyleBg: 0x00000000,
+            PopupTitleStyleFg: 0xFFE3BE59,
+            PopupStyleFg: 0xFFFFFFFF,
+            PopupStyleBg: 0xFF303030
+        };
+        
+        function exportTheme() {
+            let name = document.getElementById("name").value;
+            let section = name.replace(/\s/g, "");
+            
+            if (name == "") {
+                name = "Custom theme";
+                section = (Math.random() + 1).toString(36).substring(2);
+            }
+            
+            
+            let output = "["+section+"]\n";
+            output += "Name = " + name;
+            
+            for (const [key, value] of Object.entries(theme)) {
+                let rgb = document.getElementById(key).children[2].value;
+                let a = document.getElementById(key).children[4].value;
+                
+                let color = "0x" + Number(a).toString(16) + rgb.substring(5, 7) + rgb.substring(3, 5) + rgb.substring(1, 3);
+                
+                if (color != value) {
+                    output += "\n" + key + " = " + color;
+                }
+            }
+            
+            document.getElementById("output").innerHTML = output;
+        }
+        
+        function init() {       
+            for (const [key, value] of Object.entries(theme)) {
+                let r = ((value >>> 0) & 0xFF).toString(16);
+                let g = ((value >>> 8) & 0xFF).toString(16);
+                let b = ((value >>> 16) & 0xFF).toString(16);
+                if (r.length == 1) r = "0"+r;
+                if (g.length == 1) g = "0"+g;
+                if (b.length == 1) b = "0"+b;
+                
+                let a = ((value >>> 24) & 0xFF).toString();
+                
+                let set = document.createElement("fieldset");
+                set.setAttribute("id", key);
+                
+                let title = document.createElement("h2");
+                title.innerHTML = key;
+                set.appendChild(title);
+                
+                let labelColor = document.createElement("label");
+                labelColor.innerHTML = "Color:";
+                set.appendChild(labelColor);  
+                
+                let color = document.createElement("input")
+                color.setAttribute("type", "color");
+                color.setAttribute("value", "#"+r+g+b);
+                set.appendChild(color);  
+                
+                let labelAlpha = document.createElement("label");
+                labelAlpha.innerHTML = "Alpha:";
+                set.appendChild(labelAlpha);  
+                
+                let alpha = document.createElement("input")
+                alpha.setAttribute("type", "range");
+                alpha.setAttribute("min", "0");
+                alpha.setAttribute("max", "255");
+                
+                alpha.setAttribute("value", a);
+                set.appendChild(alpha); 
+                
+                document.getElementById("theme").appendChild(set);
+            }
+        }
+        
+    </script>
+</head>
+
+<body onload="init()"> 
+    <input type="button" onclick="exportTheme()" value = "Export">
+    <textarea readonly id="output"></textarea>
+
+    <label>Theme name:</label>
+    <input type="text" placeholder="Theme name" id="name">
+    <div id="theme">
+    </div>
+ 
+</body>
+</html> 
