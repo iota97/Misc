@@ -8,9 +8,8 @@
         h2 {
             font-size: 1.1em;
         }
-        input, label {
-            display: block;
-            margin: 1em;
+        label {
+            margin-right: 1em;
         }
         fieldset {
             min-width: 15em;
@@ -33,19 +32,7 @@
             ItemDownStyleFg: 0xFFFFFFFF,
             ItemDownStyleBg: 0xFFBD9939,
             ItemDisabledStyleFg: 0x80EEEEEE,
-            ItemDisabledStyleBg: 0x55E0D4AF,
-            ItemHighlightedStyleFg: 0xFFFFFFFF,
-            ItemHighlightedStyleBg: 0x55BDBB39,
-            ButtonStyleFg: 0xFFFFFFFF,
-            ButtonStyleBg: 0x55000000,
-            ButtonFocusedStyleFg: 0xFFFFFFFF,
-            ButtonFocusedStyleBg: 0xFFBD9939,
-            ButtonDownStyleFg: 0xFFFFFFFF,
-            ButtonDownStyleBg: 0xFFBD9939,
-            ButtonDisabledStyleFg: 0x80EEEEEE,
-            ButtonDisabledStyleBg: 0x55E0D4AF,
-            ButtonHighlightedStyleFg: 0xFFFFFFFF,
-            ButtonHighlightedStyleBg: 0x55BDBB39,
+            ItemDisabledStyleBg: 0x55000000,
             HeaderStyleFg: 0xFFFFFFFF,
             InfoStyleFg: 0xFFFFFFFF,
             InfoStyleBg: 0x00000000,
@@ -106,7 +93,7 @@
                 let color = document.createElement("input")
                 color.setAttribute("type", "color");
                 color.setAttribute("value", "#"+r+g+b);
-                set.appendChild(color);  
+                set.appendChild(color); 
                 
                 let labelAlpha = document.createElement("label");
                 labelAlpha.innerHTML = "Alpha:";
