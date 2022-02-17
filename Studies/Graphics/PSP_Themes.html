@@ -1,25 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <title>PPSSPP theme editor</title>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <style>
-        h2 {
-            font-size: 1.1em;
+        body {
+            background-color: #e6e6e6;
+        }
+        h1, h2, h3 {
+            text-align: center;
+        }
+        #name-label {
+            font-size: 1.3em;
+            font-weight: bold;
         }
         label {
-            margin-right: 1em;
-        }
-        fieldset {
-            min-width: 15em;
+            text-align: center;
+            margin: 0.5em 0 0.5em 0;
+            display: block;
         }
         #theme {
             display: flex;
             flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
         }
         textarea {
             width: 100%;
+        }
+        #theme div {
+            background-color: #b3b3b3;
+            border-radius: 10px;
+            margin: 1em;
+            width: 13em;
+        }
+        fieldset {
+            background-color: #e6e6e6;
+            border-style: none;
+            margin: 0.5em;
+            border-radius: 10px;
+        }
+        input[type="color"] {
+            width: 10em;
+            height: 4em;
+            display: block;
+            margin-right: auto;
+            margin-left: auto;
+        }
+        input[type="range"] {
+            width: 10em;
+            display: block;
+            margin-right: auto;
+            margin-left: auto;
+        }
+        input[type="text"] {
+            width: 15em;
+            display: block;
+            margin-right: auto;
+            margin-left: auto;
+        }
+        input[type="button"] {
+            width: 15em;
+            display: block;
+            margin-right: auto;
+            margin-left: auto;
+            margin-bottom: 1.5em;
         }
     </style>
     
@@ -41,22 +88,46 @@
             PopupStyleBg: 0xFF303030
         };
         
+        function download(filename, text) {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+            
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            
+            element.click();
+            
+            document.body.removeChild(element);
+        }
+        
         function exportTheme() {
             let name = document.getElementById("name").value;
             let section = name.replace(/\s/g, "");
             
             if (name == "") {
-                name = "Custom theme";
-                section = (Math.random() + 1).toString(36).substring(2);
+                // TODO
+                let n = document.getElementById("name");
+                n.style = "border-color: red;";
+                n.setAttribute("placeholder", "Name required");
+                
+                return;
             }
-            
             
             let output = "["+section+"]\n";
             output += "Name = " + name;
             
             for (const [key, value] of Object.entries(theme)) {
-                let rgb = document.getElementById(key).children[2].value;
-                let a = document.getElementById(key).children[4].value;
+                let set = document.getElementById(key);
+                let rgb;
+                let a;
+                for (let i = 0; i < set.children.length; i++) {
+                    if (set.children[i].type == "color") {
+                        rgb = set.children[i].value;
+                    } else if (set.children[i].type == "range") {
+                        a = set.children[i].value;
+                    }
+                }
                 
                 let color = "0x" + Number(a).toString(16) + rgb.substring(5, 7) + rgb.substring(3, 5) + rgb.substring(1, 3);
                 
@@ -65,7 +136,7 @@
                 }
             }
             
-            document.getElementById("output").innerHTML = output;
+            download(name+".ini", output);
         }
         
         function init() {       
@@ -79,35 +150,14 @@
                 
                 let a = ((value >>> 24) & 0xFF).toString();
                 
-                let set = document.createElement("fieldset");
-                set.setAttribute("id", key);
-                
-                let title = document.createElement("h2");
-                title.innerHTML = key;
-                set.appendChild(title);
-                
-                let labelColor = document.createElement("label");
-                labelColor.innerHTML = "Color:";
-                set.appendChild(labelColor);  
-                
-                let color = document.createElement("input")
-                color.setAttribute("type", "color");
-                color.setAttribute("value", "#"+r+g+b);
-                set.appendChild(color); 
-                
-                let labelAlpha = document.createElement("label");
-                labelAlpha.innerHTML = "Alpha:";
-                set.appendChild(labelAlpha);  
-                
-                let alpha = document.createElement("input")
-                alpha.setAttribute("type", "range");
-                alpha.setAttribute("min", "0");
-                alpha.setAttribute("max", "255");
-                
-                alpha.setAttribute("value", a);
-                set.appendChild(alpha); 
-                
-                document.getElementById("theme").appendChild(set);
+                let set = document.getElementById(key);
+                for (let i = 0; i < set.children.length; i++) {
+                    if (set.children[i].type == "color") {
+                        set.children[i].value  = "#"+r+g+b;
+                    } else if (set.children[i].type == "range") {
+                        set.children[i].value  = a;
+                    }
+                }
             }
         }
         
@@ -115,13 +165,154 @@
 </head>
 
 <body onload="init()"> 
+    <h1>PPSSPP theme editor</h1>
+    
+    <fieldset>
+        <label id="name-label">Theme name</label>
+        <input type="text" id="name">
+    </fieldset>
     <input type="button" onclick="exportTheme()" value = "Export">
-    <textarea readonly id="output"></textarea>
-
-    <label>Theme name:</label>
-    <input type="text" placeholder="Theme name" id="name">
     <div id="theme">
+        <div>
+            <h2>Item</h2>
+            
+            <fieldset id="ItemStyleFg">
+                <h3>Foreground</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" />
+            </fieldset>  
+            
+            <fieldset id="ItemStyleBg">
+                <h3>Background</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" /> 
+            </fieldset> 
+        </div>
+        
+        <div>
+            <h2>Item focused</h2>
+            
+            <fieldset id="ItemFocusedStyleFg">
+                <h3>Foreground</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" /> 
+            </fieldset> 
+            
+            <fieldset id="ItemFocusedStyleBg">
+                <h3>Background</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" /> 
+            </fieldset> 
+        </div>
+        
+        <div>
+            <h2>Item down</h2>
+            
+            <fieldset id="ItemDownStyleFg">
+                <h3>Foreground</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" /> 
+            </fieldset> 
+            
+            <fieldset id="ItemDownStyleBg">
+                <h3>Background</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" /> 
+            </fieldset> 
+        </div>
+        
+        <div>
+            <h2>Item disabled</h2>
+            
+            <fieldset id="ItemDisabledStyleFg">
+                <h3>Foreground</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" /> 
+            </fieldset> 
+            
+            <fieldset id="ItemDisabledStyleBg">
+                <h3>Background</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" /> 
+            </fieldset> 
+        </div>
+        
+        <div>
+            <h2>Info</h2>
+            
+            <fieldset id="InfoStyleFg">
+                <h3>Foreground</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" /> 
+            </fieldset> 
+            
+            <fieldset id="InfoStyleBg">
+                <h3>Background</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" /> 
+            </fieldset> 
+        </div>
+        
+        <div>
+            <h2>Popup</h2>
+            
+            <fieldset id="PopupStyleFg">
+                <h3>Foreground</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" /> 
+            </fieldset> 
+            
+            <fieldset id="PopupStyleBg">
+                <h3>Background</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" /> 
+            </fieldset> 
+        </div>
+        
+        <div>
+            <h2>Misc</h2>
+            
+            <fieldset id="HeaderStyleFg">
+                <h3>Header</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" />
+            </fieldset> 
+            
+            <fieldset id="PopupTitleStyleFg">
+                <h3>Popup title</h3>
+                <label>Color</label>
+                <input type="color" /> 
+                <label>Alpha</label>
+                <input type="range" min="0" max="255" />   
+            </fieldset> 
+        </div>
     </div>
- 
+    
 </body>
 </html> 
