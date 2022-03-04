@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
-    "name": "Hue rotator",
+    "name": "Color editor",
     "version": "1.0.0",
-    "description": "Hue rotate the web page",
+    "description": "Edit the colors of the entire page",
     "permissions": [
         "tabs", "<all_urls>", "storage"
     ],
