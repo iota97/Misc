@@ -19,8 +19,5 @@
             "32": "icon32.png"
         }
     },
-    "icons": { "32": "icon32.png" },
-    "background": {
-        "scripts": ["background.js"]
-    }
+    "icons": { "32": "icon32.png" }
 }
