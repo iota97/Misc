@@ -1,0 +1,29 @@
+<style>
+    label span{
+        color: #4469a0; 
+        font-weight: bold;
+    }
+    #gitref{
+        text-align: center;
+    }
+    #gitref a{
+        text-align: center; 
+        background-image: url(github-logo-32.png); 
+        background-position: left center; 
+        background-size: 1.2em; 
+        background-repeat: no-repeat; 
+        padding-left: 1.5em;
+    }
+</style>
+<h1 style="color: rgb(68, 105, 160); text-align: center;">Color&nbsp;Editor</h1>
+<label style="display: block; text-align: center;">Hue: <span id="huedisplay"></span></label>
+<input style="width: 100%;" type="range" min="0" max="360" id="Extension-hueSlider___" />
+<label style="display: block; text-align: center;">Saturation: <span id="satdisplay"></span></label> 
+<input style="width: 100%;" type="range" min="0" max="500" id="Extension-satSlider___" />
+<label style="display: block; text-align: center;">Brightness: <span id="bridisplay"></span></label>
+<input style="width: 100%;" type="range" min="0" max="500" id="Extension-briSlider___" />
+<label style="display: block; text-align: center;">Contrast: <span id="condisplay"></span></label>
+<input style="width: 100%;" type="range" min="0" max="500" id="Extension-conSlider___" />
+<input style="display: block; margin: 1em auto;" type="button" id="Extension-reset___" value="Reset"/>
+<p id="gitref"><a href="https://github.com/iota97/ColorExtension">GitHub Repo</a></p>
+<script src="popup.js"></script>
