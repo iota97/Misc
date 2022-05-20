@@ -1,0 +1,1 @@
+Chrome extension to bold the first half of each word in a paragraph.
