@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
     "name": "Improve reading",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Bolds the first half of each word in a paragraph",
     "permissions": [
         "tabs", "<all_urls>"
