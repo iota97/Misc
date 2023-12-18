@@ -1,7 +1,7 @@
 use core::ops;
 use std::rc::Rc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 enum Nat {
     O,
     S(Rc<Nat>)
@@ -34,12 +34,27 @@ impl ops::Add<Nat> for Nat {
     type Output = Nat;
 
     fn add(self, rhs: Nat) -> Nat {
-        let lhs = self.clone();
-        sum(&lhs, rhs)
+        sum(&self, rhs)
+    }
+}
+
+impl PartialEq<Nat> for Nat {
+    fn eq(&self, other: &Nat) -> bool {
+        match self {
+            Nat::O => match other {
+                Nat::O => true,
+                _ => false
+            },
+            Nat::S(p) => match other {
+                Nat::S(q) => p == q,
+                _ => false
+            }
+        }
     }
 }
 
 fn main() {
-    let n = Nat::new(3) + Nat::new(5);
+    let n = Nat::new(5) + Nat::new(3);
     println!("{:?}, {}", n, n.to_u32());
+    println!("{} {}", n == Nat::new(8), n == Nat::new(13));
 }
